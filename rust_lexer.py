@@ -1,4 +1,3 @@
-import ply
 # ------------------------------------------------------------
 # rust_lexer.py
 #
@@ -37,8 +36,8 @@ reserved = {
     "move": "MOVE",
     "pub": "PUB",
     "ref": "REF",
-    "Self": "SELF",
-    "self": "SELF",
+    "Self": "SELF_TYPE",
+    "self": "SELF_VALUE",
     "static": "STATIC",
     "super": "SUPER",
     "trait": "TRAIT",
