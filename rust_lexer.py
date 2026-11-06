@@ -56,6 +56,55 @@ reserved_aaortizdev = {
     "f64": "F64", 
 }
 
+tokens_aaortizdev = (
+    # Identificadores
+    'ID_STANDARD', 
+    'ID_CONST', 
+    'ID_TYPE',
+    # Literales númericos 
+    "INTEGER_LITERAL", 
+    "FLOAT_LITERAL",
+    # Operadores Aritméticos
+    "PLUS",
+    "MINUS",
+    "TIMES",
+    "DIVIDE",
+    "MOD",
+    # Operadores de Asignación
+    "ASSIGN",
+    "PLUS_ASSIGN",
+    "MINUS_ASSIGN",
+    "TIMES_ASSIGN",
+    "DIVIDE_ASSIGN",
+    "MOD_ASSIGN",
+    "BITAND_ASSIGN",
+    "BITOR_ASSIGN",
+    "BITXOR_ASSIGN",
+    "SHL_ASSIGN",
+    "SHR_ASSIGN",
+    # Símbolos para arreglos y declaraciones
+    "LBRACKET", 
+    "RBRACKET", 
+    "SEMICOLON", 
+    "COMMA",
+    "COLON"
+)
+
+# ============================================================
+# ESPACIO PARA @jonaguilera13 Y @ChrisPal2307
+# ============================================================
+
+reserved_jonathan = {
+    # TODO @jonaguilera13: if, else, while, for, loop, match, in, break, continue, return, true, false, bool
+}
+
+reserved_christian = {
+    # TODO @ChrisPal2307: String, str, char, Vec, vec, print, println
+}
+
+reserved = {**reserved_aaortizdev, **reserved_jonathan, **reserved_christian}
+tokens = tokens_aaortizdev + tuple(reserved.values())
+
 # ============================================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
