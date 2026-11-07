@@ -158,6 +158,39 @@ t_SEMICOLON = r';'
 t_COMMA     = r','
 t_COLON     = r':'
 
+# --- Reglas de detección de errores léxicos en números e identificadores --- 
+
+def t_INVALID_FLOAT(t):
+    r'\d(?:_?\d)*(?:\.\d(?:_?\d)*){2,}'
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Literal numérico inválido '{t.value}' (múltiples puntos decimales)."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+
+def t_MALFORMED_ID(t):
+    r'\d(?:_?\d)*[a-zA-Z_][a-zA-Z\d_]*'
+    col = find_column(t.lexer.lexdata, t)
+    msg(
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Identificador malformado '{t.value}' (no puede iniciar con un dígito numérico)."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+    
+# --- Reglas de literales numéricos válidos ---
+
+def t_FLOAT_LITERAL(t):
+    r'\d(?:_?\d)*\.\d(?:_?\d)*'
+    t.value = float(t.value.replace("_", ""))
+    return t 
+
+def t_INTEGER_LITERAL(t):
+    r'\d(?:_?\d)*'
+    t.value = int(t.value.replace("_", ""))
+    return t
 
 # ============================================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
