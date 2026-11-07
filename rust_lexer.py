@@ -155,7 +155,6 @@ t_COMMA     = r','
 t_COLON     = r':'
 
 # --- Reglas de detección de errores léxicos en números e identificadores --- 
-
 def t_INVALID_FLOAT(t):
     r'\d(?:_?\d)*(?:\.\d(?:_?\d)*){2,}'
     col = find_column(t.lexer.lexdata, t)
@@ -177,7 +176,6 @@ def t_MALFORMED_ID(t):
     lexical_errors.append(msg)
     
 # --- Reglas de literales numéricos válidos ---
-
 def t_FLOAT_LITERAL(t):
     r'\d(?:_?\d)*\.\d(?:_?\d)*'
     t.value = float(t.value.replace("_", ""))
@@ -187,10 +185,43 @@ def t_INTEGER_LITERAL(t):
     r'\d(?:_?\d)*'
     t.value = int(t.value.replace("_", ""))
     return t
-    
+
+# --- Regla para símbolo guión bajo ---
 def t_UNDERSCORE(t):
     r'_'
     return t
+
+# --- Reglas de identificadores y palabras reservadas ---
+RE_ID_STANDARD = re.compile(r'^_?[a-z][a-z\d_]*$')
+RE_ID_TYPE = re.compile(r'^_?[A-Z][a-zA-Z\d]*$')
+RE_ID_CONST = re.compile(r'^_?[A-Z][A-Z\d_]*$')
+
+def t_IDENTIFIER(t):
+    r'[a-zA-Z_][a-zA-Z\d_]*'
+
+    if t.value in reserved:
+        t.type = reserved[t.value]
+        return t
+    
+    if RE_ID_STANDARD.match(t.value):
+        t.type = "ID_STANDARD"
+        return t
+
+    if RE_ID_CONST.match(t.value) and len(t.value.lstrip('_')) > 1:
+        t.type = "ID_CONST"
+        return t
+
+    if RE_ID_TYPE.match(t.value):  
+        t.type = "ID_TYPE"
+        return t
+
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Identificador '{t.value}' no cumple las convenciones de nombres definidas (snake_case, SCREAMING_SNAKE_CASE o UpperCamelCase)."
+    )
+    print(msg)
+    lexical_errors.append(msg)
     
 # ============================================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
