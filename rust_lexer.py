@@ -4,7 +4,14 @@
 # Analizador léxico para un subconjunto de Rust usando PLY
 # ------------------------------------------------------------
 import ply.lex as lex
+import re
 
+lexical_errors = []
+
+def find_column(input_text, token):
+    line_start = input_text.rfind('\n', 0, token.lexpos) + 1
+    return (token.lexpos - line_start) + 1
+    
 # ============================================================
 # INICIO APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
@@ -23,7 +30,7 @@ reserved_aaortizdev = {
     "fn": "FN",
     "impl": "IMPL",
     "let": "LET",
-    "mod": "MOD",
+    "mod": "KW_MOD",
     "move": "MOVE",
     "mut": "MUT",
     "pub": "PUB",
@@ -64,13 +71,13 @@ tokens_aaortizdev = (
     # Literales númericos 
     "INTEGER_LITERAL", 
     "FLOAT_LITERAL",
-    # Operadores Aritméticos
+    # Operadores aritméticos
     "PLUS",
     "MINUS",
     "TIMES",
     "DIVIDE",
     "MOD",
-    # Operadores de Asignación
+    # Operadores de asignación (asignación básica y compuestos)
     "ASSIGN",
     "PLUS_ASSIGN",
     "MINUS_ASSIGN",
@@ -98,12 +105,59 @@ reserved_jonathan = {
     # TODO @jonaguilera13: if, else, while, for, loop, match, in, break, continue, return, true, false, bool
 }
 
+tokens_jonathan = (
+    # TODO @jonaguilera13: Operadores relacionales, lógicos y delimitadores de tuplas
+)
+
 reserved_christian = {
     # TODO @ChrisPal2307: String, str, char, Vec, vec, print, println
 }
 
+tokens_christian = (
+    # TODO @ChrisPal2307: Literales de cadenas, delimitadores de bloques/funciones, etc.
+)
+
 reserved = {**reserved_aaortizdev, **reserved_jonathan, **reserved_christian}
-tokens = tokens_aaortizdev + tuple(reserved.values())
+tokens = (
+    tokens_aaortizdev
+    + tokens_jonathan
+    + tokens_christian
+    + tuple(reserved.values())
+)
+
+# ============================================================
+# CONTINUACIÓN APORTE: @aaortizdev (Ariel Ortiz)
+# ============================================================
+
+# Reglas de expresiones regulares simples
+
+# Operadores de asignación compuestos
+t_PLUS_ASSIGN   = r'\+='
+t_MINUS_ASSIGN  = r'-='
+t_TIMES_ASSIGN  = r'\*='
+t_DIVIDE_ASSIGN = r'/='
+t_MOD_ASSIGN    = r'%='
+t_BITAND_ASSIGN = r'&='
+t_BITOR_ASSIGN  = r'\|='
+t_BITXOR_ASSIGN = r'\^='
+t_SHL_ASSIGN    = r'<<='
+t_SHR_ASSIGN    = r'>>='
+
+# Operadores aritméticos y de asignación básica
+t_PLUS   = r'\+'
+t_MINUS  = r'-'
+t_TIMES  = r'\*'
+t_DIVIDE = r'/'
+t_MOD    = r'%'
+t_ASSIGN = r'='
+
+# Símbolos para arreglos y declaraciones
+t_LBRACKET  = r'\['
+t_RBRACKET  = r'\]'
+t_SEMICOLON = r';'
+t_COMMA     = r','
+t_COLON     = r':'
+
 
 # ============================================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
