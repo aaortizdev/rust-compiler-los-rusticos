@@ -4,7 +4,14 @@
 # Analizador léxico para un subconjunto de Rust usando PLY
 # ------------------------------------------------------------
 import ply.lex as lex
+import re
 
+lexical_errors = []
+
+def find_column(input_text, token):
+    line_start = input_text.rfind('\n', 0, token.lexpos) + 1
+    return (token.lexpos - line_start) + 1
+    
 # ============================================================
 # INICIO APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
@@ -23,7 +30,7 @@ reserved_aaortizdev = {
     "fn": "FN",
     "impl": "IMPL",
     "let": "LET",
-    "mod": "MOD",
+    "mod": "KW_MOD",
     "move": "MOVE",
     "mut": "MUT",
     "pub": "PUB",
@@ -57,20 +64,16 @@ reserved_aaortizdev = {
 }
 
 tokens_aaortizdev = (
-    # Identificadores
     'ID_STANDARD', 
     'ID_CONST', 
     'ID_TYPE',
-    # Literales númericos 
     "INTEGER_LITERAL", 
     "FLOAT_LITERAL",
-    # Operadores Aritméticos
     "PLUS",
     "MINUS",
     "TIMES",
     "DIVIDE",
     "MOD",
-    # Operadores de Asignación
     "ASSIGN",
     "PLUS_ASSIGN",
     "MINUS_ASSIGN",
@@ -82,12 +85,12 @@ tokens_aaortizdev = (
     "BITXOR_ASSIGN",
     "SHL_ASSIGN",
     "SHR_ASSIGN",
-    # Símbolos para arreglos y declaraciones
     "LBRACKET", 
     "RBRACKET", 
     "SEMICOLON", 
     "COMMA",
-    "COLON"
+    "COLON",
+    "UNDERSCORE"
 )
 
 # ============================================================
@@ -98,13 +101,146 @@ reserved_jonathan = {
     # TODO @jonaguilera13: if, else, while, for, loop, match, in, break, continue, return, true, false, bool
 }
 
+tokens_jonathan = (
+    # TODO @jonaguilera13: Operadores relacionales, lógicos y delimitadores de tuplas
+)
+
 reserved_christian = {
     # TODO @ChrisPal2307: String, str, char, Vec, vec, print, println
 }
 
-reserved = {**reserved_aaortizdev, **reserved_jonathan, **reserved_christian}
-tokens = tokens_aaortizdev + tuple(reserved.values())
+tokens_christian = (
+    # TODO @ChrisPal2307: Literales de cadenas, delimitadores de bloques/funciones, etc.
+)
 
+reserved = {**reserved_aaortizdev, **reserved_jonathan, **reserved_christian}
+tokens = (
+    tokens_aaortizdev
+    + tokens_jonathan
+    + tokens_christian
+    + tuple(reserved.values())
+)
+
+# ============================================================
+# CONTINUACIÓN APORTE: @aaortizdev (Ariel Ortiz)
+# ============================================================
+
+# Reglas de expresiones regulares simples
+
+# Operadores de asignación compuestos
+t_PLUS_ASSIGN   = r'\+='
+t_MINUS_ASSIGN  = r'-='
+t_TIMES_ASSIGN  = r'\*='
+t_DIVIDE_ASSIGN = r'/='
+t_MOD_ASSIGN    = r'%='
+t_BITAND_ASSIGN = r'&='
+t_BITOR_ASSIGN  = r'\|='
+t_BITXOR_ASSIGN = r'\^='
+t_SHL_ASSIGN    = r'<<='
+t_SHR_ASSIGN    = r'>>='
+
+# Operadores aritméticos y de asignación básica
+t_PLUS   = r'\+'
+t_MINUS  = r'-'
+t_TIMES  = r'\*'
+t_DIVIDE = r'/'
+t_MOD    = r'%'
+t_ASSIGN = r'='
+
+# Símbolos para arreglos y declaraciones
+t_LBRACKET  = r'\['
+t_RBRACKET  = r'\]'
+t_SEMICOLON = r';'
+t_COMMA     = r','
+t_COLON     = r':'
+
+# --- Reglas de detección de errores léxicos en números e identificadores --- 
+def t_INVALID_FLOAT(t):
+    r'\d(?:_?\d)*(?:\.\d(?:_?\d)*){2,}'
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Literal numérico inválido '{t.value}' (múltiples puntos decimales)."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+
+def t_MALFORMED_ID(t):
+    r'\d(?:_?\d)*[a-zA-Z_][a-zA-Z\d_]*'
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Identificador malformado '{t.value}' (no puede iniciar con un dígito numérico)."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+    
+# --- Reglas de literales numéricos válidos ---
+def t_FLOAT_LITERAL(t):
+    r'\d(?:_?\d)*\.\d(?:_?\d)*'
+    t.value = float(t.value.replace("_", ""))
+    return t 
+
+def t_INTEGER_LITERAL(t):
+    r'\d(?:_?\d)*'
+    t.value = int(t.value.replace("_", ""))
+    return t
+
+# --- Regla para símbolo guión bajo ---
+def t_UNDERSCORE(t):
+    r'_'
+    return t
+
+# --- Reglas de identificadores y palabras reservadas ---
+RE_ID_STANDARD = re.compile(r'^_?[a-z][a-z\d_]*$')
+RE_ID_TYPE = re.compile(r'^_?[A-Z][a-zA-Z\d]*$')
+RE_ID_CONST = re.compile(r'^_?[A-Z][A-Z\d_]*$')
+
+def t_IDENTIFIER(t):
+    r'[a-zA-Z_][a-zA-Z\d_]*'
+
+    if t.value in reserved:
+        t.type = reserved[t.value]
+        return t
+    
+    if RE_ID_STANDARD.match(t.value):
+        t.type = "ID_STANDARD"
+        return t
+
+    if RE_ID_CONST.match(t.value) and len(t.value.lstrip('_')) > 1:
+        t.type = "ID_CONST"
+        return t
+
+    if RE_ID_TYPE.match(t.value):  
+        t.type = "ID_TYPE"
+        return t
+
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Identificador '{t.value}' no cumple las convenciones de nombres definidas (snake_case, SCREAMING_SNAKE_CASE o UpperCamelCase)."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+    
 # ============================================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
+
+def t_newline(t):
+    r'\n+'
+    t.lexer.lineno += len(t.value)
+
+t_ignore = ' \t\r'
+
+def t_error(t):
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Carácter no reconocido en el lenguaje '{t.value[0]}'"
+    )
+    print(msg)
+    lexical_errors.append(msg)
+    t.lexer.skip(1)
+
+lexer = lex.lex()
