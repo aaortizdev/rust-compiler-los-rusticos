@@ -226,3 +226,21 @@ def t_IDENTIFIER(t):
 # ============================================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
+
+def t_newline(t):
+    r'\n+'
+    t.lexer.lineno += len(t.value)
+
+t_ignore = ' \t\r'
+
+def t_error(t):
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Carácter no reconocido en el lenguaje '{t.value[0]}'"
+    )
+    print(msg)
+    lexical_errors.append(msg)
+    t.lexer.skip(1)
+
+lexer = lex.lex()
