@@ -64,20 +64,16 @@ reserved_aaortizdev = {
 }
 
 tokens_aaortizdev = (
-    # Identificadores
     'ID_STANDARD', 
     'ID_CONST', 
     'ID_TYPE',
-    # Literales númericos 
     "INTEGER_LITERAL", 
     "FLOAT_LITERAL",
-    # Operadores aritméticos
     "PLUS",
     "MINUS",
     "TIMES",
     "DIVIDE",
     "MOD",
-    # Operadores de asignación (asignación básica y compuestos)
     "ASSIGN",
     "PLUS_ASSIGN",
     "MINUS_ASSIGN",
@@ -89,12 +85,12 @@ tokens_aaortizdev = (
     "BITXOR_ASSIGN",
     "SHL_ASSIGN",
     "SHR_ASSIGN",
-    # Símbolos para arreglos y declaraciones
     "LBRACKET", 
     "RBRACKET", 
     "SEMICOLON", 
     "COMMA",
-    "COLON"
+    "COLON",
+    "UNDERSCORE"
 )
 
 # ============================================================
@@ -173,7 +169,7 @@ def t_INVALID_FLOAT(t):
 def t_MALFORMED_ID(t):
     r'\d(?:_?\d)*[a-zA-Z_][a-zA-Z\d_]*'
     col = find_column(t.lexer.lexdata, t)
-    msg(
+    msg = (
         f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
         f"Identificador malformado '{t.value}' (no puede iniciar con un dígito numérico)."
     )
@@ -191,7 +187,11 @@ def t_INTEGER_LITERAL(t):
     r'\d(?:_?\d)*'
     t.value = int(t.value.replace("_", ""))
     return t
-
+    
+def t_UNDERSCORE(t):
+    r'_'
+    return t
+    
 # ============================================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
