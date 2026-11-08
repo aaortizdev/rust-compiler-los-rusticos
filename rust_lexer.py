@@ -4,22 +4,21 @@
 # Analizador léxico para un subconjunto de Rust usando PLY
 # ------------------------------------------------------------
 import ply.lex as lex
-import re
 
 lexical_errors = []
 
 def find_column(input_text, token):
     line_start = input_text.rfind('\n', 0, token.lexpos) + 1
     return (token.lexpos - line_start) + 1
-    
+
 # ============================================================
 # INICIO APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
 
-# Palabras reservadas 
+# Palabras reservadas
 reserved_aaortizdev = {
     # Declaraciones
-    "as": "AS", 
+    "as": "AS",
     "async": "ASYNC",
     "await": "AWAIT",
     "const": "CONST",
@@ -47,27 +46,25 @@ reserved_aaortizdev = {
     "use": "USE",
     "where": "WHERE",
     # Tipos de datos numéricos
-    "i8": "I8", 
-    "i16": "I16", 
-    "i32": "I32", 
-    "i64": "I64", 
-    "i128": "I128", 
-    "isize": "ISIZE", 
-    "u8": "U8", 
-    "u16": "U16", 
-    "u32": "U32", 
-    "u64": "U64", 
-    "u128": "U128", 
+    "i8": "I8",
+    "i16": "I16",
+    "i32": "I32",
+    "i64": "I64",
+    "i128": "I128",
+    "isize": "ISIZE",
+    "u8": "U8",
+    "u16": "U16",
+    "u32": "U32",
+    "u64": "U64",
+    "u128": "U128",
     "usize": "USIZE",
     "f32": "F32",
-    "f64": "F64", 
+    "f64": "F64",
 }
 
 tokens_aaortizdev = (
-    'ID_STANDARD', 
-    'ID_CONST', 
-    'ID_TYPE',
-    "INTEGER_LITERAL", 
+    "IDENTIFIER",
+    "INTEGER_LITERAL",
     "FLOAT_LITERAL",
     "PLUS",
     "MINUS",
@@ -85,12 +82,12 @@ tokens_aaortizdev = (
     "BITXOR_ASSIGN",
     "SHL_ASSIGN",
     "SHR_ASSIGN",
-    "LBRACKET", 
-    "RBRACKET", 
-    "SEMICOLON", 
+    "LBRACKET",
+    "RBRACKET",
+    "SEMICOLON",
     "COMMA",
     "COLON",
-    "UNDERSCORE"
+    "UNDERSCORE",
 )
 
 # ============================================================
@@ -166,7 +163,7 @@ def t_INVALID_FLOAT(t):
     lexical_errors.append(msg)
 
 def t_MALFORMED_ID(t):
-    r'\d(?:_?\d)*[a-zA-Z_][a-zA-Z\d_]*'
+    r'\d(?:_?\d)*_?[a-zA-Z][a-zA-Z\d_]*'
     col = find_column(t.lexer.lexdata, t)
     msg = (
         f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
@@ -186,43 +183,15 @@ def t_INTEGER_LITERAL(t):
     t.value = int(t.value.replace("_", ""))
     return t
 
-# --- Regla para símbolo guión bajo ---
-def t_UNDERSCORE(t):
-    r'_'
-    return t
-
-# --- Reglas de identificadores y palabras reservadas ---
-RE_ID_STANDARD = re.compile(r'^_?[a-z][a-z\d_]*$')
-RE_ID_TYPE = re.compile(r'^_?[A-Z][a-zA-Z\d]*$')
-RE_ID_CONST = re.compile(r'^_?[A-Z][A-Z\d_]*$')
-
+# --- Identificadores y palabras reservadas ---
 def t_IDENTIFIER(t):
     r'[a-zA-Z_][a-zA-Z\d_]*'
+    if t.value == '_':
+        t.type = "UNDERSCORE"
+    else:
+        t.type = reserved.get(t.value, "IDENTIFIER")
+    return t
 
-    if t.value in reserved:
-        t.type = reserved[t.value]
-        return t
-    
-    if RE_ID_STANDARD.match(t.value):
-        t.type = "ID_STANDARD"
-        return t
-
-    if RE_ID_CONST.match(t.value) and len(t.value.lstrip('_')) > 1:
-        t.type = "ID_CONST"
-        return t
-
-    if RE_ID_TYPE.match(t.value):  
-        t.type = "ID_TYPE"
-        return t
-
-    col = find_column(t.lexer.lexdata, t)
-    msg = (
-        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
-        f"Identificador '{t.value}' no cumple las convenciones de nombres definidas (snake_case, SCREAMING_SNAKE_CASE o UpperCamelCase)."
-    )
-    print(msg)
-    lexical_errors.append(msg)
-    
 # ============================================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================

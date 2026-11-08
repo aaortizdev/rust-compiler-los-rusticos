@@ -47,6 +47,6 @@ def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
     print(f"\n[OK] Log generado exitosamente en: {nombre_log}")
     
 if __name__ == "__main__":
-    analizar_archivo_y_generar_log("algoritmos/algoritmo1.rs", "aaortizdev")
-    # analizar_archivo_y_generar_log("algoritmos/algoritmo2.rs", "jonaguilera13")
-    # analizar_archivo_y_generar_log("algoritmos/algoritmo3.rs", "ChrisPal2307")
+    # analizar_archivo_y_generar_log("algoritmos/algoritmo#_aaortizdev.rs", "aaortizdev")
+    # analizar_archivo_y_generar_log("algoritmos/algoritmo#.rs", "jonaguilera13")
+    # analizar_archivo_y_generar_log("algoritmos/algoritmo#.rs", "ChrisPal2307")
