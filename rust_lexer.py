@@ -132,12 +132,39 @@ tokens_jonathan = (
     "FAT_ARROW", #Sirve para el comando match
 )
 
+
+# ============================================================
+# INICIO APORTE: @ChrisPal2307 (Christian Palma)
+# ============================================================
+
 reserved_christian = {
-    # TODO @ChrisPal2307: String, str, char, Vec, vec, print, println
+    "char": "CHAR",
+    "str": "STR",
 }
 
 tokens_christian = (
-    # TODO @ChrisPal2307: Literales de cadenas, delimitadores de bloques/funciones, etc.
+    "BANG",          
+    "QUESTION",
+
+    # Delimitadores de bloques y acceso
+    "LBRACE",        # {
+    "RBRACE",        # }
+    "DOT",           # .
+    "DOTDOT",        # ..
+    "DOTDOTEQ",      # ..=
+    "PATH_SEP",      # ::   
+      
+    # Operadores bitwise y referencias
+    "BITAND",        # & (Referencias o AND bitwise)
+    "BITOR",         # | (Patrones match o BITOR bitwise)
+    "BITXOR",        # ^ (XOR bitwise)
+    "SHL",           # <<
+    "SHR",           # >>
+    "ARROW",         # -> (Retorno de funciones)
+
+    # Literales 
+    "STRING_LITERAL", # "texto"
+    "CHAR_LITERAL",   # 'c'
 )
 
 reserved = {**reserved_aaortizdev, **reserved_jonathan, **reserved_christian}
@@ -147,6 +174,42 @@ tokens = (
     + tokens_christian
     + tuple(reserved.values())
 )
+
+
+#Antes de la definicion de "/"
+def t_BLOCK_COMMENT(t):
+    r'/\*'
+    source = t.lexer.lexdata
+    start = t.lexpos
+    index = t.lexer.lexpos
+    depth = 1
+
+    while index < len(source) and depth:
+        if source.startswith('/*', index):
+            depth += 1
+            index += 2
+        elif source.startswith('*/', index):
+            depth -= 1
+            index += 2
+        else:
+            index += 1
+
+    comment = source[start:index]
+    t.lexer.lexpos = index
+    t.lexer.lineno += comment.count('\n')
+
+    if depth:
+        col = find_column(source, t)
+        msg = (
+            f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+            f"Comentario multilínea sin cerrar ('/*')."
+        )
+        print(msg)
+        lexical_errors.append(msg)
+
+def t_LINE_COMMENT(t):
+    r'//.*'
+    pass
 
 # ============================================================
 # CONTINUACIÓN APORTE: @aaortizdev (Ariel Ortiz)
@@ -181,6 +244,17 @@ t_SEMICOLON = r';'
 t_COMMA     = r','
 t_COLON     = r':'
 
+
+def t_INVALID_BASE_LITERAL(t):
+    r'0[bB][01_]*[2-9a-zA-Z]+[a-zA-Z\d_]*|0[oO][0-7_]*[89a-zA-Z]+[a-zA-Z\d_]*|0[xX][0-9a-fA-F_]*[g-zG-Z]+[a-zA-Z\d_]*'
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Literal numérico en base no válida o malformado '{t.value}'."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+
 # --- Reglas de detección de errores léxicos en números e identificadores --- 
 def t_INVALID_FLOAT(t):
     r'\d(?:_?\d)*(?:\.\d(?:_?\d)*){2,}'
@@ -193,7 +267,7 @@ def t_INVALID_FLOAT(t):
     lexical_errors.append(msg)
 
 def t_MALFORMED_ID(t):
-    r'\d(?:_?\d)*_?[a-zA-Z][a-zA-Z\d_]*'
+    r'(?!(?:0[bB][01_]+|0[oO][0-7_]+|0[xX][0-9a-fA-F_]+)(?![a-zA-Z\d_]))\d(?:_?\d)*(?!i8|i16|i32|i64|i128|isize|u8|u16|u32|u64|u128|usize|f32|f64\b)_?[a-zA-Z][a-zA-Z\d_]*'
     col = find_column(t.lexer.lexdata, t)
     msg = (
         f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
@@ -201,16 +275,25 @@ def t_MALFORMED_ID(t):
     )
     print(msg)
     lexical_errors.append(msg)
-    
+
 # --- Reglas de literales numéricos válidos ---
 def t_FLOAT_LITERAL(t):
     r'\d(?:_?\d)*\.\d(?:_?\d)*'
     t.value = float(t.value.replace("_", ""))
-    return t 
+    return t
 
 def t_INTEGER_LITERAL(t):
-    r'\d(?:_?\d)*'
-    t.value = int(t.value.replace("_", ""))
+    r'(?:0b[01_]+|0x[0-9a-fA-F_]+|0o[0-7_]+|\d(?:_?\d)*)'
+    # Procesar el valor según la base
+    val_str = t.value.replace("_", "")
+    if val_str.startswith("0b"):
+        t.value = int(val_str[2:], 2)
+    elif val_str.startswith("0x"):
+        t.value = int(val_str[2:], 16)
+    elif val_str.startswith("0o"):
+        t.value = int(val_str[2:], 8)
+    else:
+        t.value = int(val_str)
     return t
 
 # --- Identificadores y palabras reservadas ---
@@ -251,6 +334,85 @@ t_ignore_COMMENT = r'//[^\n]*'
 # ============================================================
 # FIN APORTE: @jonaguilera13 (Carlos Aguilera)
 # ============================================================
+
+
+
+# ============================================================
+# CONTINUACIÓN APORTE: @ChrisPal2307 (Christian Palma)
+# ============================================================
+
+# Operadores compuestos y delimitadores multicarácter
+t_DOTDOTEQ  = r'\.\.='
+t_DOTDOT    = r'\.\.'
+t_PATH_SEP  = r'::'
+t_SHL       = r'<<'
+t_SHR       = r'>>'
+t_ARROW     = r'->'
+
+# Operadores de un solo carácter y delimitadores de bloques
+t_BANG      = r'!'
+t_QUESTION  = r'\?'
+t_LBRACE    = r'\{'
+t_RBRACE    = r'\}'
+t_DOT       = r'\.'
+t_BITAND    = r'&'
+t_BITOR     = r'\|'
+t_BITXOR    = r'\^'
+
+def t_UNCLOSED_STRING(t):
+    r'"([^"\\\n]|\\[^\n])*(?=\n|$)'
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        "Cadena de texto sin cerrar (falta la comilla doble de cierre)."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+    
+def t_UNCLOSED_CHAR_LITERAL(t):
+    r"'(?:[^'\\\n]|\\.)*(?=\n|$)"
+    col = find_column(t.lexer.lexdata, t)
+    msg = f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: Literal de carácter sin cerrar."
+    print(msg)
+    lexical_errors.append(msg)
+
+def t_STRING_LITERAL(t):
+    r'"([^"\\]|\\.)*"'
+    t.lexer.lineno += t.value.count('\n')
+    return t
+
+def t_INVALID_CHAR_LITERAL(t):
+    r"''|'(?:[^'\\\n]|\\.){2,}'"
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Literal de carácter inválido {t.value!r}: debe contener exactamente un carácter."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+
+def t_CHAR_LITERAL(t):
+    r'\'([^\'\\]|\\.)\''
+    return t
+
+def t_UNSUPPORTED_BACKTICK_LITERAL(t):
+    r'`[^`\n]*`'
+    col = find_column(t.lexer.lexdata, t)
+    msg = (
+        f"[ERROR LÉXICO] Línea {t.lineno}, Columna {col}: "
+        f"Literal delimitado por backticks {t.value!r} no es válido en este lenguaje; "
+        "usa comillas dobles para cadenas."
+    )
+    print(msg)
+    lexical_errors.append(msg)
+
+
+
+# ============================================================
+# FIN APORTE: @ChrisPal2307 (Christian Palma)
+# ============================================================
+
+
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
