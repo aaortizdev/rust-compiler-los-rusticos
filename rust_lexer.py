@@ -129,6 +129,7 @@ tokens_jonathan = (
     # Paréntesis: tuplas, agrupación y llamadas
     "LPAREN", # paréntesis izquierdo
     "RPAREN", # paréntesis derecho
+    "FAT_ARROW", #Sirve para el comando match
 )
 
 reserved_christian = {
@@ -243,7 +244,7 @@ t_NOT = r'!'
 
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
-
+t_FAT_ARROW = r'=>'
 # ============================================================
 # FIN APORTE: @jonaguilera13 (Carlos Aguilera)
 # ============================================================
