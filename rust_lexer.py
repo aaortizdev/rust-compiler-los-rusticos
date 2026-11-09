@@ -245,6 +245,9 @@ t_NOT = r'!'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_FAT_ARROW = r'=>'
+
+#Sirve para poner ignorar los comentarios, y no arroje error.
+t_ignore_COMMENT = r'//[^\n]*'
 # ============================================================
 # FIN APORTE: @jonaguilera13 (Carlos Aguilera)
 # ============================================================
