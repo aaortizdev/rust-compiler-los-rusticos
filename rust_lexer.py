@@ -91,15 +91,44 @@ tokens_aaortizdev = (
 )
 
 # ============================================================
-# ESPACIO PARA @jonaguilera13 Y @ChrisPal2307
+# INICIO APORTE: @jonaguilera13 (Carlos Aguilera)
 # ============================================================
 
 reserved_jonathan = {
-    # TODO @jonaguilera13: if, else, while, for, loop, match, in, break, continue, return, true, false, bool
+    # Estructuras de control
+    "if": "IF",
+    "else": "ELSE",
+    "while": "WHILE",
+    "for": "FOR",
+    "loop": "LOOP",
+    "match": "MATCH",
+    "in": "IN",
+    "break": "BREAK",
+    "continue": "CONTINUE",
+    "return": "RETURN",
+    # Valores y tipo booleano
+    "true": "TRUE",
+    "false": "FALSE",
+    "bool": "BOOL",
 }
 
 tokens_jonathan = (
-    # TODO @jonaguilera13: Operadores relacionales, lógicos y delimitadores de tuplas
+    # Operadores relacionales
+    "EQ",   # Equivalente
+    "NE",   # Diferente
+    "LT",   # menor
+    "LE",   # menor igual que
+    "GT",   # mayor
+    "GE",   # mayor igual que
+    
+    # Operadores lógicos
+    "AND",
+    "OR",
+    "NOT",
+
+    # Paréntesis: tuplas, agrupación y llamadas
+    "LPAREN", # paréntesis izquierdo
+    "RPAREN", # paréntesis derecho
 )
 
 reserved_christian = {
