@@ -48,5 +48,5 @@ def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
     
 if __name__ == "__main__":
     # analizar_archivo_y_generar_log("algoritmos/algoritmo#_aaortizdev.rs", "aaortizdev")
-    # analizar_archivo_y_generar_log("algoritmos/algoritmo#.rs", "jonaguilera13")
+    # analizar_archivo_y_generar_log("algoritmos/algoritmo#_jonaguilera13.rs", "jonaguilera13")
     # analizar_archivo_y_generar_log("algoritmos/algoritmo#.rs", "ChrisPal2307")

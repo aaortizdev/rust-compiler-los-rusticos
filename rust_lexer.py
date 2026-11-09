@@ -91,15 +91,45 @@ tokens_aaortizdev = (
 )
 
 # ============================================================
-# ESPACIO PARA @jonaguilera13 Y @ChrisPal2307
+# INICIO APORTE: @jonaguilera13 (Carlos Aguilera)
 # ============================================================
 
 reserved_jonathan = {
-    # TODO @jonaguilera13: if, else, while, for, loop, match, in, break, continue, return, true, false, bool
+    # Estructuras de control
+    "if": "IF",
+    "else": "ELSE",
+    "while": "WHILE",
+    "for": "FOR",
+    "loop": "LOOP",
+    "match": "MATCH",
+    "in": "IN",
+    "break": "BREAK",
+    "continue": "CONTINUE",
+    "return": "RETURN",
+    # Valores y tipo booleano
+    "true": "TRUE",
+    "false": "FALSE",
+    "bool": "BOOL",
 }
 
 tokens_jonathan = (
-    # TODO @jonaguilera13: Operadores relacionales, lógicos y delimitadores de tuplas
+    # Operadores relacionales
+    "EQ",   # Equivalente
+    "NE",   # Diferente
+    "LT",   # menor
+    "LE",   # menor igual que
+    "GT",   # mayor
+    "GE",   # mayor igual que
+    
+    # Operadores lógicos
+    "AND",
+    "OR",
+    "NOT",
+
+    # Paréntesis: tuplas, agrupación y llamadas
+    "LPAREN", # paréntesis izquierdo
+    "RPAREN", # paréntesis derecho
+    "FAT_ARROW", #Sirve para el comando match
 )
 
 reserved_christian = {
@@ -196,6 +226,31 @@ def t_IDENTIFIER(t):
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
 
+# ============================================================
+# CONTINUACIÓN APORTE: @jonaguilera13 (Carlos Aguilera)
+# ============================================================
+
+#Relación de los nombres de los tokens escogidos para reconocer operadores relacionales, lógicos y paréntesis.
+t_EQ = r'=='
+t_NE = r'!='
+t_LE = r'<='
+t_GE = r'>='
+t_LT = r'<'
+t_GT = r'>'
+
+t_AND = r'&&'
+t_OR = r'\|\|'
+t_NOT = r'!'
+
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_FAT_ARROW = r'=>'
+
+#Sirve para poner ignorar los comentarios, y no arroje error.
+t_ignore_COMMENT = r'//[^\n]*'
+# ============================================================
+# FIN APORTE: @jonaguilera13 (Carlos Aguilera)
+# ============================================================
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
