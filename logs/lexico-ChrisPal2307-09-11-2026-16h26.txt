@@ -1,6 +1,6 @@
 --- Log de análisis léxico (ChrisPal2307) ---
 Archivo analizado: algoritmos/algoritmo2_ChrisPal2307.rs
-Fecha y Hora: 09/11/2026 16:06:24
+Fecha y Hora: 09/11/2026 16:26:28
 
 --- Tokens reconocidos ---
 Token(tipo='FN', valor='fn', línea=1, columna=1)
@@ -195,7 +195,6 @@ Token(tipo='SEMICOLON', valor=';', línea=49, columna=29)
 Token(tipo='LET', valor='let', línea=51, columna=5)
 Token(tipo='IDENTIFIER', valor='var', línea=51, columna=9)
 Token(tipo='ASSIGN', valor='=', línea=51, columna=13)
-Token(tipo='RBRACE', valor='}', línea=52, columna=1)
 
 --- Errores léxicos detectados ---
 [ERROR LÉXICO] Línea 6, Columna 25: Literal numérico en base no válida o malformado '0b1010_2'.
@@ -208,3 +207,4 @@ Token(tipo='RBRACE', valor='}', línea=52, columna=1)
 [ERROR LÉXICO] Línea 47, Columna 22: Literal numérico en base no válida o malformado '0x12GH3'.
 [ERROR LÉXICO] Línea 49, Columna 23: Identificador malformado '100var' (no puede iniciar con un dígito numérico).
 [ERROR LÉXICO] Línea 51, Columna 15: Literal de carácter sin cerrar.
+[ERROR LÉXICO] Línea 53, Columna 5: Comentario multilínea sin cerrar ('/*').

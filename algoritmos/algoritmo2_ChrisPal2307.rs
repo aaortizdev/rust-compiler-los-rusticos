@@ -49,4 +49,6 @@ fn main() {
     let id_invalido = 100var;
     
     let var = 'a;
+    
+    /*asdasd   
 }
