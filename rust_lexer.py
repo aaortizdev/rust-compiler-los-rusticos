@@ -225,6 +225,28 @@ def t_IDENTIFIER(t):
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
 # ============================================================
 
+# ============================================================
+# CONTINUACIÓN APORTE: @jonaguilera13 (Carlos Aguilera)
+# ============================================================
+
+#Relación de los nombres de los tokens escogidos para reconocer operadores relacionales, lógicos y paréntesis.
+t_EQ = r'=='
+t_NE = r'!='
+t_LE = r'<='
+t_GE = r'>='
+t_LT = r'<'
+t_GT = r'>'
+
+t_AND = r'&&'
+t_OR = r'\|\|'
+t_NOT = r'!'
+
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+
+# ============================================================
+# FIN APORTE: @jonaguilera13 (Carlos Aguilera)
+# ============================================================
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
