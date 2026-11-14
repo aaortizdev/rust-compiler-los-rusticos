@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import rust_parser
 from rust_lexer import lexer, lexical_errors, find_column
 
 def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
@@ -45,8 +46,30 @@ def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
         log_file.write(contenido_final)
     
     print(f"\n[OK] Log generado exitosamente en: {nombre_log}")
+
+def run_parser(path, git_user="aaortizdev"):
+    with open(path, encoding="utf-8") as f:
+        data = f.read()
+
+    rust_parser.syntax_errors.clear()
+    rust_parser.lexer.lineno = 1
+    rust_parser.parser.parse(data, lexer=rust_parser.lexer)
+
+    os.makedirs("logs", exist_ok=True)
+    ahora = datetime.now()
+    log_path = f"logs/Sintáctico/sintactico-{git_user}-{ahora.strftime('%Y%m%d-%Hh%M')}.txt"
+
+    lineas = [
+        f"--- Log de análisis sintáctico ({git_user}) ---",
+        f"Archivo analizado: {path}",
+        f"Fecha y Hora: {ahora.strftime('%d/%m/%Y %H:%M:%S')}\n",
+        "--- Errores sintácticos detectados ---",
+    ]
+    lineas += rust_parser.syntax_errors or ["Ningún error sintáctico detectado."]
+
+    with open(log_path, "w", encoding="utf-8") as log:
+        log.write("\n".join(lineas))
+    print(f"[OK] Log generado en: {log_path}")
     
 if __name__ == "__main__":
-    analizar_archivo_y_generar_log("algoritmos/algoritmo3_aaortizdev.rs", "aaortizdev")
-    # analizar_archivo_y_generar_log("algoritmos/algoritmo#_jonaguilera13.rs", "jonaguilera13")
-    # analizar_archivo_y_generar_log("algoritmos/algoritmo#_ChrisPal2307.rs", "ChrisPal2307")
+    run_parser("algoritmos/Sintáctico/algoritmo4_aaortizdev.rs")
