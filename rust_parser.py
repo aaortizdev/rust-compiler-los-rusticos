@@ -273,7 +273,69 @@ def p_else_clause(p):
                 | empty'''
     p[0] = p[2] if len(p) == 3 else None
 
-#Falta match
+#Estructura para match (extra)
+def p_match_expr(p):
+    '''match_expr : MATCH expression LBRACE match_arms_opt RBRACE'''
+    p[0] = ('match', p[2], p[4])
+
+
+def p_statement_match(p):
+    '''statement : match_expr
+                | match_expr SEMICOLON'''
+    p[0] = p[1]
+
+
+def p_primary_match(p):
+    '''primary : match_expr'''
+    p[0] = p[1]
+
+
+def p_match_arms_opt(p):
+    '''match_arms_opt : match_arms
+                    | empty'''
+    p[0] = p[1] if p[1] is not None else []
+
+
+def p_match_arms(p):
+    '''match_arms : match_arm
+                | match_arms COMMA match_arm
+                | match_arms COMMA
+                | match_arms match_arm_block'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    elif len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    elif p.slice[2].type == 'match_arm_block':
+        p[0] = p[1] + [p[2]]
+    else:
+        p[0] = p[1]
+
+
+def p_match_arm(p):
+    '''match_arm : match_arm_block
+                | match_pattern FAT_ARROW expression'''
+    p[0] = p[1] if len(p) == 2 else ('match_arm', p[1], p[3])
+
+
+def p_match_arm_block(p):
+    '''match_arm_block : match_pattern FAT_ARROW block'''
+    p[0] = ('match_arm', p[1], p[3])
+
+
+def p_match_pattern(p):
+    '''match_pattern : INTEGER_LITERAL
+                    | FLOAT_LITERAL
+                    | CHAR_LITERAL
+                    | STRING_LITERAL
+                    | TRUE
+                    | FALSE
+                    | UNDERSCORE
+                    | IDENTIFIER
+                    | MINUS INTEGER_LITERAL'''
+    if len(p) == 3:
+        p[0] = ('pattern_literal', -p[2])
+    else:
+        p[0] = ('wildcard',) if p.slice[1].type == 'UNDERSCORE' else ('pattern', p[1])
 
 #Función con parámetros y sin retorno.
 def p_statement_fn_params(p):
