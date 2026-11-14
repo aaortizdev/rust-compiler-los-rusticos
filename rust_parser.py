@@ -108,8 +108,41 @@ def p_assign_op(p):
                  | SHR_ASSIGN'''
     p[0] = p[1]
 
-# --------- Expresiones aritmétricas ------------
+# ----------- Expresiones aritmétricas ----------
+def p_expression_binop(p):
+    '''expression : expression PLUS expression
+                  | expression MINUS expression
+                  | expression TIMES expression
+                  | expression DIVIDE expression
+                  | expression MOD expression'''
+    p[0] = ('binop', p[2], p[1], p[3])
+
+def p_expression_uminus(p):
+    '''expression : MINUS expression %prec UMINUS'''
+    p[0] = ('neg', p[2])
+
+def p_expression_primary(p):
+    '''expression : primary '''
+    p[0] = p[1]
+
+def p_primary_group(p):
+    '''primary : LPAREN expression RPAREN'''
+    p[0] = p[2]
+
 # -------- Literales (valores para asignar) -----
+def p_primary_literal(p):
+    '''primary : INTEGER_LITERAL
+               | FLOAT_LITERAL
+               | STRING_LITERAL
+               | CHAR_LITERAL
+               | TRUE
+               | FALSE'''
+    p[0] = ('lit', p[1])
+
+def p_primary_identifier(p):
+    '''primary : IDENTIFIER'''
+    p[0] = ('var', p[1])
+
 # --- Arreglos: tipo, inicialización y acceso ---
 # -------- Estructura de control while ----------
 # --- Función sin parámetros y sin retorno ------
