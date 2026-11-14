@@ -274,7 +274,63 @@ def p_else_clause(p):
     p[0] = p[2] if len(p) == 3 else None
 
 #Falta match
-#Falta funcion con parametros
+
+#Función con parámetros y sin retorno.
+def p_statement_fn_params(p):
+    '''statement : FN IDENTIFIER LPAREN fn_parameters RPAREN block'''
+    p[0] = ('fn', p[2], p[4], p[6])
+
+
+def p_fn_parameters(p):
+    '''fn_parameters : fn_parameter
+                    | fn_parameters COMMA fn_parameter
+                    | fn_parameters COMMA'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    elif len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    else:
+        p[0] = p[1]
+
+
+def p_fn_parameter(p):
+    '''fn_parameter : IDENTIFIER COLON type
+                    | MUT IDENTIFIER COLON type'''
+    p[0] = ('param', p[1], p[3], False) if len(p) == 4 else ('param', p[2], p[4], True)
+
+
+# Para poder utilizar las funciones definidas.
+def p_function_call(p):
+    '''function_call : IDENTIFIER LPAREN call_arguments_opt RPAREN'''
+    p[0] = ('call', p[1], p[3])
+
+
+def p_call_arguments_opt(p):
+    '''call_arguments_opt : call_arguments
+                    | empty'''
+    p[0] = p[1] if p[1] is not None else []
+
+
+def p_call_arguments(p):
+    '''call_arguments : expression
+                | call_arguments COMMA expression
+                | call_arguments COMMA'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    elif len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    else:
+        p[0] = p[1]
+
+
+def p_primary_function_call(p):
+    '''primary : function_call'''
+    p[0] = p[1]
+
+
+def p_statement_function_call(p):
+    '''statement : function_call SEMICOLON'''
+    p[0] = ('expr_stmt', p[1])
 
 #struct: definición y propiedades
 def p_statement_struct(p):
@@ -288,7 +344,7 @@ def p_statement_struct(p):
 
 def p_struct_fields_opt(p):
     '''struct_fields_opt : struct_fields
-                        | empty'''
+                    | empty'''
     p[0] = p[1] if p[1] is not None else []
 
 
