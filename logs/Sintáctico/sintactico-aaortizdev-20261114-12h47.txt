@@ -1,0 +1,16 @@
+--- Log de análisis sintáctico (aaortizdev) ---
+Archivo analizado: algoritmos/Sintáctico/algoritmo6_aaortizdev.rs
+Fecha y Hora: 14/11/2026 12:47:35
+
+--- Errores sintácticos detectados ---
+[ERROR SINTÁCTICO] Línea 6, Columna 13: Token inesperado '3' (INTEGER_LITERAL).
+[ERROR SINTÁCTICO] Línea 10, Columna 16: Token inesperado ']' (RBRACKET).
+[ERROR SINTÁCTICO] Línea 14, Columna 12: Token inesperado ']' (RBRACKET).
+[ERROR SINTÁCTICO] Línea 18, Columna 7: Token inesperado '{' (LBRACE).
+[ERROR SINTÁCTICO] Línea 18, Columna 17: Token inesperado '}' (RBRACE).
+[ERROR SINTÁCTICO] Línea 23, Columna 1: Token inesperado 'let' (LET).
+[ERROR SINTÁCTICO] Línea 26, Columna 13: Token inesperado '{' (LBRACE).
+[ERROR SINTÁCTICO] Línea 28, Columna 1: Token inesperado '}' (RBRACE).
+[ERROR SINTÁCTICO] Línea 32, Columna 16: Token inesperado ';' (SEMICOLON).
+[ERROR SINTÁCTICO] Línea 36, Columna 4: Token inesperado '(' (LPAREN).
+[ERROR SINTÁCTICO] Fin de archivo inesperado (falta cerrar una instrucción o bloque).

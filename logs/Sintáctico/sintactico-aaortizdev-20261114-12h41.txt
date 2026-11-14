@@ -1,0 +1,6 @@
+--- Log de análisis sintáctico (aaortizdev) ---
+Archivo analizado: algoritmos/Sintáctico/algoritmo4_aaortizdev.rs
+Fecha y Hora: 14/11/2026 12:41:08
+
+--- Errores sintácticos detectados ---
+Ningún error sintáctico detectado.
