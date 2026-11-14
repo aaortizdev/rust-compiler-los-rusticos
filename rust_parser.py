@@ -29,12 +29,14 @@ def p_program(p):
 
 
 def p_statement_list(p):
-    '''statement_list : statement_list statement | statement'''
+    '''statement_list : statement_list statement
+                      | statement'''
     p[0] = p[1] + [p[2]] if len(p) == 3 else [p[1]]
 
 
 def p_block(p):
-    '''block : LBRACE statement_list RBRACE | LBRACE RBRACE'''
+    '''block : LBRACE statement_list RBRACE
+             | LBRACE RBRACE'''
     p[0] = ('block', p[2] if len(p) == 4 else [])
 
 
@@ -73,11 +75,13 @@ def p_statement_var_decl(p):
     p[0] = ('let', p[2], p[3], p[4], p[6])
 
 def p_mutability(p):
-    '''mutability : MUT | empty'''
+    '''mutability : MUT
+                  | empty'''
     p[0] = p[1] is not None
 
 def p_type_annotation(p):
-    '''type_annotation : COLON type | empty'''
+    '''type_annotation : COLON type
+                       | empty'''
     p[0] = p[2] if len(p) == 3 else None
 
 # --------- Declaración de constantes -----------
@@ -91,7 +95,8 @@ def p_statement_assignment(p):
     p[0] = ('assign', p[1], p[2], p[3])
 
 def p_lvalue(p):
-    '''lvalue : IDENTIFIER | lvalue LBRACKET expression RBRACKET'''
+    '''lvalue : IDENTIFIER
+              | lvalue LBRACKET expression RBRACKET'''
     p[0] = ('var', p[1]) if len(p) == 2 else ('index', p[1], p[3])
 
 def p_assign_op(p):
@@ -153,7 +158,8 @@ def p_primary_array_literal(p):
     p[0] = ('array', p[2])
 
 def p_array_elements(p):
-    '''array_elements : array_elements COMMA expression | expression'''
+    '''array_elements : array_elements COMMA expression
+                      | expression'''
     p[0] = p[1] + [p[3]] if len(p) == 4 else [p[1]]
 
 def p_primary_array_access(p):
