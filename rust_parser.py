@@ -14,8 +14,15 @@ syntax_errors = []
 
 # Precedencia: de menor a mayor
 
-# Carlos agrega aquí arriba OR, AND, relacionales;
-# Christian agrega lo suyo si aplica.
+precedence = (
+    ('left', 'OR'),
+    ('left', 'AND'),
+    ('nonassoc', 'EQ', 'NE', 'LT', 'LE', 'GT', 'GE'),
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'TIMES', 'DIVIDE', 'MOD'),
+    ('right', 'NOT', 'UMINUS'),
+)
+
 
 precedence = (
     ('left', 'PLUS', 'MINUS'),
@@ -183,6 +190,134 @@ def p_statement_fn_no_params(p):
 # ===============================================
 # INICIO APORTE: @jonaguilera13 (Carlos Aguilera)
 # ===============================================
+
+#Expresiones booleanas y relacionales
+def p_expression_logical_relational(p):
+    '''expression : expression OR expression
+                | expression AND expression
+                | expression EQ expression
+                | expression NE expression
+                | expression LT expression
+                | expression LE expression
+                | expression GT expression
+                | expression GE expression'''
+    p[0] = ('binop', p[2], p[1], p[3])
+
+
+def p_expression_not(p):
+    '''expression : NOT expression'''
+    p[0] = ('not', p[2])
+
+
+#Tuplas: declaración, tipo y acceso
+def p_type_tuple(p):
+    '''type : LPAREN tuple_type_elements RPAREN
+            | LPAREN RPAREN'''
+    p[0] = ('tuple_type', p[2] if len(p) == 4 else [])
+
+
+def p_tuple_type_elements(p):
+    '''tuple_type_elements : type COMMA tuple_type_tail'''
+    p[0] = [p[1]] + p[3]
+
+
+def p_tuple_type_tail(p):
+    '''tuple_type_tail : type
+                    | type COMMA tuple_type_tail
+                    | empty'''
+    if len(p) == 2:
+        p[0] = [] if p[1] is None else [p[1]]
+    else:
+        p[0] = [p[1]] + p[3]
+
+
+def p_primary_tuple(p):
+    '''primary : LPAREN expression COMMA tuple_expr_tail RPAREN
+                | LPAREN RPAREN'''
+    p[0] = ('tuple', [p[2]] + p[4] if len(p) == 6 else [])
+
+def p_tuple_expr_tail(p):
+    '''tuple_expr_tail : expression
+                    | expression COMMA tuple_expr_tail
+                    | empty'''
+    if len(p) == 2:
+        p[0] = [] if p[1] is None else [p[1]]
+    else:
+        p[0] = [p[1]] + p[3]
+
+
+def p_primary_field_or_tuple_access(p):
+    '''primary : primary DOT INTEGER_LITERAL
+            | primary DOT IDENTIFIER'''
+    p[0] = ('field_access', p[1], p[3])
+
+
+def p_lvalue_field_or_tuple_access(p):
+    '''lvalue : lvalue DOT INTEGER_LITERAL
+            | lvalue DOT IDENTIFIER'''
+    p[0] = ('field_access', p[1], p[3])
+
+# if / else
+def p_statement_if(p):
+    '''statement : if_statement'''
+    p[0] = p[1]
+
+def p_if_statement(p):
+    '''if_statement : IF expression block else_clause'''
+    p[0] = ('if', p[2], p[3], p[4])
+
+
+def p_else_clause(p):
+    '''else_clause : ELSE block
+                | ELSE if_statement
+                | empty'''
+    p[0] = p[2] if len(p) == 3 else None
+
+#Falta match
+#Falta funcion con parametros
+
+#struct: definición y propiedades
+def p_statement_struct(p):
+    '''statement : STRUCT IDENTIFIER LBRACE struct_fields_opt RBRACE
+                | PUB STRUCT IDENTIFIER LBRACE struct_fields_opt RBRACE'''
+    if len(p) == 6:
+        p[0] = ('struct', p[2], p[4], False)
+    else:
+        p[0] = ('struct', p[3], p[5], True)
+
+
+def p_struct_fields_opt(p):
+    '''struct_fields_opt : struct_fields
+                        | empty'''
+    p[0] = p[1] if p[1] is not None else []
+
+
+def p_struct_fields(p):
+    '''struct_fields : struct_field
+                    | struct_fields COMMA struct_field
+                    | struct_fields COMMA'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    elif len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    else:
+        p[0] = p[1]
+
+
+def p_struct_field(p):
+    '''struct_field : field_visibility IDENTIFIER COLON type'''
+    p[0] = ('field', p[2], p[4], p[1])
+
+
+def p_field_visibility(p):
+    '''field_visibility : PUB
+                    | empty'''
+    p[0] = p[1] is not None
+
+
+def p_type_struct_name(p):
+    '''type : IDENTIFIER'''
+    p[0] = ('named_type', p[1])
 
 # ===============================================
 # FIN APORTE: @jonaguilera13 (Carlos Aguilera)
