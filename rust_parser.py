@@ -86,6 +86,28 @@ def p_statement_const_decl(p):
     p[0] = ('const', p[2], p[4], p[6])
 
 # ------ Asignaciones simples y compuestas ------
+def p_statement_assignment(p):
+    '''statement : lvalue assign_op expression SEMICOLON'''
+    p[0] = ('assign', p[1], p[2], p[3])
+
+def p_lvalue(p):
+    '''lvalue : IDENTIFIER | lvalue LBRACKET expression RBRACKET'''
+    p[0] = ('var', p[1]) if len(p) == 2 else ('index', p[1], p[3])
+
+def p_assign_op(p):
+    '''assign_op : ASSIGN
+                 | PLUS_ASSIGN
+                 | MINUS_ASSIGN
+                 | TIMES_ASSIGN
+                 | DIVIDE_ASSIGN
+                 | MOD_ASSIGN
+                 | BITAND_ASSIGN
+                 | BITOR_ASSIGN
+                 | BITXOR_ASSIGN
+                 | SHL_ASSIGN
+                 | SHR_ASSIGN'''
+    p[0] = p[1]
+
 # --------- Expresiones aritmétricas ------------
 # -------- Literales (valores para asignar) -----
 # --- Arreglos: tipo, inicialización y acceso ---
