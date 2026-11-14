@@ -67,6 +67,31 @@ def p_type_primitive(p):
 # INICIO APORTE: @aaortizdev (Ariel Ortiz)
 # ===============================================
 
+# --------- Declaración de variables ------------
+def p_statement_var_decl(p):
+    '''statement : LET mutability IDENTIFIER type_annotation ASSIGN expression SEMICOLON'''
+    p[0] = ('let', p[2], p[3], p[4], p[6])
+
+def p_mutability(p):
+    '''mutability : MUT | empty'''
+    p[0] = p[1] is not None
+
+def p_type_annotation(p):
+    '''type_annotation : COLON type | empty'''
+    p[0] = p[2] if len(p) == 3 else None
+
+# --------- Declaración de constantes -----------
+def p_statement_const_decl(p):
+    '''statement : CONST IDENTIFIER COLON type ASSIGN expression SEMICOLON'''
+    p[0] = ('const', p[2], p[4], p[6])
+
+# ------ Asignaciones simples y compuestas ------
+# --------- Expresiones aritmétricas ------------
+# -------- Literales (valores para asignar) -----
+# --- Arreglos: tipo, inicialización y acceso ---
+# -------- Estructura de control while ----------
+# --- Función sin parámetros y sin retorno ------
+
 # ===============================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
 # ===============================================
