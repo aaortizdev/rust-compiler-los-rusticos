@@ -1,0 +1,13 @@
+--- Log de análisis sintáctico (aaortizdev) ---
+Archivo analizado: algoritmos/Sintáctico/algoritmo5_aaortizdev.rs
+Fecha y Hora: 14/11/2026 12:43:37
+
+--- Errores sintácticos detectados ---
+[ERROR SINTÁCTICO] Línea 6, Columna 5: Token inesperado '=' (ASSIGN).
+[ERROR SINTÁCTICO] Línea 10, Columna 8: Token inesperado '=' (ASSIGN).
+[ERROR SINTÁCTICO] Línea 14, Columna 14: Token inesperado '=' (ASSIGN).
+[ERROR SINTÁCTICO] Línea 18, Columna 9: Token inesperado ';' (SEMICOLON).
+[ERROR SINTÁCTICO] Línea 22, Columna 13: Token inesperado '*' (TIMES).
+[ERROR SINTÁCTICO] Línea 26, Columna 15: Token inesperado ';' (SEMICOLON).
+[ERROR SINTÁCTICO] Línea 30, Columna 8: Token inesperado ';' (SEMICOLON).
+[ERROR SINTÁCTICO] Fin de archivo inesperado (falta cerrar una instrucción o bloque).
