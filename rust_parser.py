@@ -24,8 +24,45 @@ precedence = (
 )
 
 def p_program(p):
+    '''program : statement_list'''
     p[0] = ('program', p[1])
 
+
+def p_statement_list(p):
+    '''statement_list : statement_list statement | statement'''
+    p[0] = p[1] + [p[2]] if len(p) == 3 else [p[1]]
+
+
+def p_block(p):
+    '''block : LBRACE statement_list RBRACE | LBRACE RBRACE'''
+    p[0] = ('block', p[2] if len(p) == 4 else [])
+
+
+def p_empty(p):
+    '''empty :'''
+    p[0] = None
+
+def p_type_primitive(p):
+    '''type : I8
+            | I16
+            | I32
+            | I64
+            | I128
+            | ISIZE
+            | U8
+            | U16
+            | U32
+            | U64
+            | U128
+            | USIZE
+            | F32
+            | F64
+            | BOOL
+            | CHAR
+            | STR
+            | BITAND STR'''
+    p[0] = ('type', ''.join(str(x) for x in p[1:]))
+    
 # ===============================================
 # INICIO APORTE: @aaortizdev (Ariel Ortiz)
 # ===============================================
