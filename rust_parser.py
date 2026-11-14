@@ -144,8 +144,31 @@ def p_primary_identifier(p):
     p[0] = ('var', p[1])
 
 # --- Arreglos: tipo, inicialización y acceso ---
+def p_type_array(p):
+    '''type : LBRACKET type SEMICOLON expression RBRACKET'''
+    p[0] = ('array_type', p[2], p[4])
+
+def p_primary_array_literal(p):
+    '''primary : LBRACKET array_elements RBRACKET'''
+    p[0] = ('array', p[2])
+
+def p_array_elements(p):
+    '''array_elements : array_elements COMMA expression | expression'''
+    p[0] = p[1] + [p[3]] if len(p) == 4 else [p[1]]
+
+def p_primary_array_access(p):
+    '''primary : primary LBRACKET expression RBRACKET'''
+    p[0] = ('index', p[1], p[3])
+
 # -------- Estructura de control while ----------
+def p_statement_while(p):
+    '''statement : WHILE expression block'''
+    p[0] = ('while', p[2], p[3])
+
 # --- Función sin parámetros y sin retorno ------
+def p_statement_fn_no_params(p):
+    '''statement : FN IDENTIFIER LPAREN RPAREN block'''
+    p[0] = ('fn', p[2], p[5])
 
 # ===============================================
 # FIN APORTE: @aaortizdev (Ariel Ortiz)
