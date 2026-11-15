@@ -1,5 +1,8 @@
 import os
+import re
+from contextlib import redirect_stdout
 from datetime import datetime
+from io import StringIO
 import rust_parser
 from rust_lexer import lexer, lexical_errors, find_column
 
@@ -47,13 +50,31 @@ def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
     
     print(f"\n[OK] Log generado exitosamente en: {nombre_log}")
 
-def run_parser(path, git_user="jonaguilera13"):
+def run_parser(path, git_user="ChrisPal2307"):
     with open(path, encoding="utf-8") as f:
         data = f.read()
 
     rust_parser.syntax_errors.clear()
     rust_parser.lexer.lineno = 1
-    rust_parser.parser.parse(data, lexer=rust_parser.lexer)
+    parser_output = StringIO()
+    with redirect_stdout(parser_output):
+        rust_parser.parser.parse(data, lexer=rust_parser.lexer, tracking=True)
+    for error in rust_parser.find_unclosed_delimiter_errors(data):
+        if error not in rust_parser.syntax_errors:
+            rust_parser.syntax_errors.append(error)
+
+    def error_position(error):
+        match = re.search(r"Línea (\d+)(?:, Columna (\d+))?", error)
+        if match is None:
+            return float("inf"), 0
+        return int(match.group(1)), int(match.group(2) or 0)
+
+    rust_parser.syntax_errors.sort(key=error_position)
+    for output_line in parser_output.getvalue().splitlines():
+        if output_line and not output_line.startswith("[ERROR SINTÁCTICO]"):
+            print(output_line)
+    for error in rust_parser.syntax_errors:
+        print(error)
 
     os.makedirs("logs", exist_ok=True)
     ahora = datetime.now()
@@ -72,4 +93,4 @@ def run_parser(path, git_user="jonaguilera13"):
     print(f"[OK] Log generado en: {log_path}")
     
 if __name__ == "__main__":
-    run_parser("algoritmos/Sintáctico/algoritmo3_jonaguilera13.rs")
+    run_parser("algoritmos/Sintáctico/algoritmo9_ChrisPal2307.rs")

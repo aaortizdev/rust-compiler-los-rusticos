@@ -1,0 +1,20 @@
+--- Log de análisis sintáctico (ChrisPal2307) ---
+Archivo analizado: algoritmos/Sintáctico/algoritmo9_ChrisPal2307.rs
+Fecha y Hora: 14/11/2026 21:36:24
+
+--- Errores sintácticos detectados ---
+[ERROR SINTÁCTICO] Línea 2: Falta ';' al final de la declaración use.
+[ERROR SINTÁCTICO] Línea 10, Columna 40: Token inesperado '{' (LBRACE).
+[ERROR SINTÁCTICO] Línea 11: Falta ';' al final de la instrucción.
+[ERROR SINTÁCTICO] Línea 20, Columna 40: Token inesperado 'bono' (IDENTIFIER).
+[ERROR SINTÁCTICO] Línea 20, Columna 55: Falta '}' para cerrar '{'.
+[ERROR SINTÁCTICO] Línea 24, Columna 11: Token inesperado '0' (INTEGER_LITERAL).
+[ERROR SINTÁCTICO] Línea 31, Columna 11: Falta '}' para cerrar '{'.
+[ERROR SINTÁCTICO] Línea 33: Falta ';' al final de la declaración let.
+[ERROR SINTÁCTICO] Línea 33, Columna 31: Token inesperado '=' (ASSIGN).
+[ERROR SINTÁCTICO] Línea 33, Columna 45: Token inesperado '30' (INTEGER_LITERAL).
+[ERROR SINTÁCTICO] Línea 34: Falta ';' al final de la instrucción.
+[ERROR SINTÁCTICO] Línea 36: Falta ';' al final de la instrucción.
+[ERROR SINTÁCTICO] Línea 40, Columna 27: Token inesperado 'mut' (MUT).
+[ERROR SINTÁCTICO] Línea 43, Columna 46: Token inesperado '5' (INTEGER_LITERAL).
+[ERROR SINTÁCTICO] Línea 46, Columna 42: Token inesperado 'resultado' (IDENTIFIER).
