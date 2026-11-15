@@ -1,0 +1,6 @@
+--- Log de análisis sintáctico (ChrisPal2307) ---
+Archivo analizado: algoritmos/Sintáctico/algoritmo8_ChrisPal2307.rs
+Fecha y Hora: 14/11/2026 21:24:20
+
+--- Errores sintácticos detectados ---
+Ningún error sintáctico detectado.
