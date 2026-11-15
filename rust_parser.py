@@ -14,8 +14,15 @@ syntax_errors = []
 
 # Precedencia: de menor a mayor
 
-# Carlos agrega aquí arriba OR, AND, relacionales;
-# Christian agrega lo suyo si aplica.
+precedence = (
+    ('left', 'OR'),
+    ('left', 'AND'),
+    ('nonassoc', 'EQ', 'NE', 'LT', 'LE', 'GT', 'GE'),
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'TIMES', 'DIVIDE', 'MOD'),
+    ('right', 'NOT', 'UMINUS'),
+)
+
 
 precedence = (
     ('left', 'PLUS', 'MINUS'),
@@ -183,6 +190,252 @@ def p_statement_fn_no_params(p):
 # ===============================================
 # INICIO APORTE: @jonaguilera13 (Carlos Aguilera)
 # ===============================================
+
+#Expresiones booleanas y relacionales
+def p_expression_logical_relational(p):
+    '''expression : expression OR expression
+                | expression AND expression
+                | expression EQ expression
+                | expression NE expression
+                | expression LT expression
+                | expression LE expression
+                | expression GT expression
+                | expression GE expression'''
+    p[0] = ('binop', p[2], p[1], p[3])
+
+
+def p_expression_not(p):
+    '''expression : NOT expression'''
+    p[0] = ('not', p[2])
+
+
+#Tuplas: declaración, tipo y acceso
+def p_type_tuple(p):
+    '''type : LPAREN tuple_type_elements RPAREN
+            | LPAREN RPAREN'''
+    p[0] = ('tuple_type', p[2] if len(p) == 4 else [])
+
+
+def p_tuple_type_elements(p):
+    '''tuple_type_elements : type COMMA tuple_type_tail'''
+    p[0] = [p[1]] + p[3]
+
+
+def p_tuple_type_tail(p):
+    '''tuple_type_tail : type
+                    | type COMMA tuple_type_tail
+                    | empty'''
+    if len(p) == 2:
+        p[0] = [] if p[1] is None else [p[1]]
+    else:
+        p[0] = [p[1]] + p[3]
+
+
+def p_primary_tuple(p):
+    '''primary : LPAREN expression COMMA tuple_expr_tail RPAREN
+                | LPAREN RPAREN'''
+    p[0] = ('tuple', [p[2]] + p[4] if len(p) == 6 else [])
+
+def p_tuple_expr_tail(p):
+    '''tuple_expr_tail : expression
+                    | expression COMMA tuple_expr_tail
+                    | empty'''
+    if len(p) == 2:
+        p[0] = [] if p[1] is None else [p[1]]
+    else:
+        p[0] = [p[1]] + p[3]
+
+
+def p_primary_field_or_tuple_access(p):
+    '''primary : primary DOT INTEGER_LITERAL
+            | primary DOT IDENTIFIER'''
+    p[0] = ('field_access', p[1], p[3])
+
+
+def p_lvalue_field_or_tuple_access(p):
+    '''lvalue : lvalue DOT INTEGER_LITERAL
+            | lvalue DOT IDENTIFIER'''
+    p[0] = ('field_access', p[1], p[3])
+
+# if / else
+def p_statement_if(p):
+    '''statement : if_statement'''
+    p[0] = p[1]
+
+def p_if_statement(p):
+    '''if_statement : IF expression block else_clause'''
+    p[0] = ('if', p[2], p[3], p[4])
+
+
+def p_else_clause(p):
+    '''else_clause : ELSE block
+                | ELSE if_statement
+                | empty'''
+    p[0] = p[2] if len(p) == 3 else None
+
+#Estructura para match (extra)
+def p_match_expr(p):
+    '''match_expr : MATCH expression LBRACE match_arms_opt RBRACE'''
+    p[0] = ('match', p[2], p[4])
+
+
+def p_statement_match(p):
+    '''statement : match_expr
+                | match_expr SEMICOLON'''
+    p[0] = p[1]
+
+
+def p_primary_match(p):
+    '''primary : match_expr'''
+    p[0] = p[1]
+
+
+def p_match_arms_opt(p):
+    '''match_arms_opt : match_arms
+                    | empty'''
+    p[0] = p[1] if p[1] is not None else []
+
+
+def p_match_arms(p):
+    '''match_arms : match_arm
+                | match_arms COMMA match_arm
+                | match_arms COMMA
+                | match_arms match_arm_block'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    elif len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    elif p.slice[2].type == 'match_arm_block':
+        p[0] = p[1] + [p[2]]
+    else:
+        p[0] = p[1]
+
+
+def p_match_arm(p):
+    '''match_arm : match_arm_block
+                | match_pattern FAT_ARROW expression'''
+    p[0] = p[1] if len(p) == 2 else ('match_arm', p[1], p[3])
+
+
+def p_match_arm_block(p):
+    '''match_arm_block : match_pattern FAT_ARROW block'''
+    p[0] = ('match_arm', p[1], p[3])
+
+
+def p_match_pattern(p):
+    '''match_pattern : INTEGER_LITERAL
+                    | FLOAT_LITERAL
+                    | CHAR_LITERAL
+                    | STRING_LITERAL
+                    | TRUE
+                    | FALSE
+                    | UNDERSCORE
+                    | IDENTIFIER
+                    | MINUS INTEGER_LITERAL'''
+    if len(p) == 3:
+        p[0] = ('pattern_literal', -p[2])
+    else:
+        p[0] = ('wildcard',) if p.slice[1].type == 'UNDERSCORE' else ('pattern', p[1])
+
+#Función con parámetros y sin retorno.
+def p_statement_fn_params(p):
+    '''statement : FN IDENTIFIER LPAREN fn_parameters RPAREN block'''
+    p[0] = ('fn', p[2], p[4], p[6])
+
+
+def p_fn_parameters(p):
+    '''fn_parameters : fn_parameter
+                    | fn_parameters COMMA fn_parameter
+                    | fn_parameters COMMA'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    elif len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    else:
+        p[0] = p[1]
+
+
+def p_fn_parameter(p):
+    '''fn_parameter : IDENTIFIER COLON type
+                    | MUT IDENTIFIER COLON type'''
+    p[0] = ('param', p[1], p[3], False) if len(p) == 4 else ('param', p[2], p[4], True)
+
+
+# Para poder utilizar las funciones definidas.
+def p_function_call(p):
+    '''function_call : IDENTIFIER LPAREN call_arguments_opt RPAREN'''
+    p[0] = ('call', p[1], p[3])
+
+
+def p_call_arguments_opt(p):
+    '''call_arguments_opt : call_arguments
+                    | empty'''
+    p[0] = p[1] if p[1] is not None else []
+
+
+def p_call_arguments(p):
+    '''call_arguments : expression
+                | call_arguments COMMA expression
+                | call_arguments COMMA'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    elif len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    else:
+        p[0] = p[1]
+
+
+def p_primary_function_call(p):
+    '''primary : function_call'''
+    p[0] = p[1]
+
+
+def p_statement_function_call(p):
+    '''statement : function_call SEMICOLON'''
+    p[0] = ('expr_stmt', p[1])
+
+#struct: definición y propiedades
+def p_statement_struct(p):
+    '''statement : STRUCT IDENTIFIER LBRACE struct_fields_opt RBRACE
+                | PUB STRUCT IDENTIFIER LBRACE struct_fields_opt RBRACE'''
+    if len(p) == 6:
+        p[0] = ('struct', p[2], p[4], False)
+    else:
+        p[0] = ('struct', p[3], p[5], True)
+
+
+def p_struct_fields_opt(p):
+    '''struct_fields_opt : struct_fields
+                    | empty'''
+    p[0] = p[1] if p[1] is not None else []
+
+
+def p_struct_fields(p):
+    '''struct_fields : struct_field
+                    | struct_fields COMMA struct_field
+                    | struct_fields COMMA'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    elif len(p) == 4:
+        p[0] = p[1] + [p[3]]
+    else:
+        p[0] = p[1]
+
+
+def p_struct_field(p):
+    '''struct_field : field_visibility IDENTIFIER COLON type'''
+    p[0] = ('field', p[2], p[4], p[1])
+
+
+def p_field_visibility(p):
+    '''field_visibility : PUB
+                    | empty'''
+    p[0] = p[1] is not None
+
+
+def p_type_struct_name(p):
+    '''type : IDENTIFIER'''
+    p[0] = ('named_type', p[1])
 
 # ===============================================
 # FIN APORTE: @jonaguilera13 (Carlos Aguilera)

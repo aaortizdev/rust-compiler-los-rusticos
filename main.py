@@ -47,7 +47,7 @@ def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
     
     print(f"\n[OK] Log generado exitosamente en: {nombre_log}")
 
-def run_parser(path, git_user="aaortizdev"):
+def run_parser(path, git_user="jonaguilera13"):
     with open(path, encoding="utf-8") as f:
         data = f.read()
 
@@ -72,4 +72,4 @@ def run_parser(path, git_user="aaortizdev"):
     print(f"[OK] Log generado en: {log_path}")
     
 if __name__ == "__main__":
-    run_parser("algoritmos/Sintáctico/algoritmo4_aaortizdev.rs")
+    run_parser("algoritmos/Sintáctico/algoritmo3_jonaguilera13.rs")

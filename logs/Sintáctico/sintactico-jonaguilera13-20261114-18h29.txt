@@ -1,0 +1,14 @@
+--- Log de análisis sintáctico (jonaguilera13) ---
+Archivo analizado: algoritmos/Sintáctico/algoritmo3_jonaguilera13.rs
+Fecha y Hora: 14/11/2026 18:29:55
+
+--- Errores sintácticos detectados ---
+[ERROR SINTÁCTICO] Línea 4, Columna 12: Token inesperado '2' (INTEGER_LITERAL).
+[ERROR SINTÁCTICO] Línea 6, Columna 19: Token inesperado '{' (LBRACE).
+[ERROR SINTÁCTICO] Línea 6, Columna 32: Token inesperado '}' (RBRACE).
+[ERROR SINTÁCTICO] Línea 8, Columna 13: Token inesperado 'i32' (I32).
+[ERROR SINTÁCTICO] Línea 8, Columna 31: Token inesperado '}' (RBRACE).
+[ERROR SINTÁCTICO] Línea 10, Columna 23: Token inesperado 'i32' (I32).
+[ERROR SINTÁCTICO] Línea 12, Columna 19: Token inesperado '{' (LBRACE).
+[ERROR SINTÁCTICO] Línea 12, Columna 32: Token inesperado '}' (RBRACE).
+[ERROR SINTÁCTICO] Línea 12, Columna 53: Token inesperado '}' (RBRACE).

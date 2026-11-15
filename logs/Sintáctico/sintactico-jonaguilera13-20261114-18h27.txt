@@ -1,0 +1,6 @@
+--- Log de análisis sintáctico (jonaguilera13) ---
+Archivo analizado: algoritmos/Sintáctico/algoritmo1_jonaguilera13.rs
+Fecha y Hora: 14/11/2026 18:27:33
+
+--- Errores sintácticos detectados ---
+Ningún error sintáctico detectado.
