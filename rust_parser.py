@@ -23,13 +23,6 @@ precedence = (
     ('right', 'NOT', 'UMINUS'),
 )
 
-
-precedence = (
-    ('left', 'PLUS', 'MINUS'),
-    ('left', 'TIMES', 'DIVIDE', 'MOD'),
-    ('right', 'UMINUS'),
-)
-
 def p_program(p):
     '''program : statement_list'''
     p[0] = ('program', p[1])
