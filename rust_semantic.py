@@ -277,6 +277,7 @@ class AnalizadorSemantico:
 
         elif tag == "field_access":
             self.visitar_expr(e[1])
+            self.regla_acceso_tupla(e)
 
         elif tag == "call":
             for arg in e[2]:
@@ -676,6 +677,28 @@ class AnalizadorSemantico:
                     f"'{self.nombre_tipo(t_izq)}' y '{self.nombre_tipo(t_der)}'.",
                     self.posicion_expresion(expr))
 
+    # Regla Semántica2- Condiciones y operadores lógicos bool
+    def regla_condicion_booleana(self, expr, estructura):
+        tipo = self.tipo_expresion(expr)
+        if tipo is not None and tipo != "bool":
+            self.error(f"La condición de '{estructura}' debe ser 'bool', "f"no '{self.nombre_tipo(tipo)}'.", self.posicion_expresion(expr))
+
+    def regla_negacion_booleana(self, expr):
+        tipo = self.tipo_expresion(expr[1])
+        if tipo is not None and tipo != "bool":
+            self.error(f"El operador lógico '!' requiere un operando 'bool', "f"no '{self.nombre_tipo(tipo)}'.", self.posicion_expresion(expr[1]))
+
+    # Regla Semántica 3 (Como extra)- Acceso válido a elementos de una tupla   
+    def regla_acceso_tupla(self, expr):
+        _, tupla, indice = expr
+        tipo = self.tipo_expresion(tupla)
+        if not (isinstance(tipo, tuple) and tipo[0] == "tuple"):
+            return
+        if not isinstance(indice, int):
+            return
+        cantidad = len(tipo[1])
+        if indice < 0 or indice >= cantidad:
+            self.error(f"Índice {indice} fuera de rango, la tupla tiene {cantidad} "f"elementos (índices válidos: 0 a {cantidad - 1}).",self.posicion_expresion(tupla),)
     # ============================================================
     # FIN APORTE: @jonaguilera13 (Carlos Aguilera)
     # ============================================================
