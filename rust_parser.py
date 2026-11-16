@@ -90,7 +90,7 @@ def p_type_primitive(p):
 # --------- Declaración de variables ------------
 def p_statement_var_decl(p):
     '''statement : LET mutability IDENTIFIER type_annotation ASSIGN expression SEMICOLON'''
-    p[0] = ('let', p[2], p[3], p[4], p[6])
+    p[0] = ('let', p[2], p[3], p[4], p[6], p.lexpos(3))
 
 def p_mutability(p):
     '''mutability : MUT
@@ -105,7 +105,7 @@ def p_type_annotation(p):
 # --------- Declaración de constantes -----------
 def p_statement_const_decl(p):
     '''statement : CONST IDENTIFIER COLON type ASSIGN expression SEMICOLON'''
-    p[0] = ('const', p[2], p[4], p[6])
+    p[0] = ('const', p[2], p[4], p[6], p.lexpos(2))
 
 # ------ Asignaciones simples y compuestas ------
 def p_statement_assignment(p):
@@ -159,11 +159,11 @@ def p_primary_literal(p):
                | CHAR_LITERAL
                | TRUE
                | FALSE'''
-    p[0] = ('lit', p[1])
+    p[0] = ('lit', p[1], p.lexpos(1))
 
 def p_primary_identifier(p):
     '''primary : IDENTIFIER'''
-    p[0] = ('var', p[1])
+    p[0] = ('var', p[1], p.lexpos(1))
 
 # --- Arreglos: tipo, inicialización y acceso ---
 def p_type_array(p):
