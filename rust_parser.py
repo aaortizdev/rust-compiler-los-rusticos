@@ -793,7 +793,7 @@ def p_type_self(p):
 
 def p_primary_self_value(p):
     '''primary : SELF_VALUE'''
-    p[0] = ('var', p[1])
+    p[0] = ('var', p[1], p.lexpos(1))
 
 # ===============================================
 # FIN APORTE: @ChrisPal2307 (Christian Palma)

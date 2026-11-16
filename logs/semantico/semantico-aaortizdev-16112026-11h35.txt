@@ -1,0 +1,10 @@
+--- Log de análisis semántico (aaortizdev) ---
+Archivo analizado: algoritmos/semantico/algoritmo1_aaortizdev.rs
+Fecha y Hora: 16/11/2026 11:35:12
+
+--- Errores semánticos detectados ---
+[ERROR SEMÁNTICO] Línea 31, Columna 5: No se puede asignar ('='): la variable 'notas' es inmutable (declarada en la línea 11); declárala como 'let mut notas'.
+[ERROR SEMÁNTICO] Línea 34, Columna 5: No se puede asignar ('=') a la constante 'NOTA_MINIMA': las constantes no se pueden reasignar.
+[ERROR SEMÁNTICO] Línea 37, Columna 32: El identificador 'reprobados' no ha sido declarado en este ámbito.
+[ERROR SEMÁNTICO] Línea 40, Columna 31: El identificador 'maximo' no ha sido declarado en este ámbito.
+[ERROR SEMÁNTICO] Línea 43, Columna 5: No se puede asignar ('='): la variable 'promedio' es inmutable (declarada en la línea 26); declárala como 'let mut promedio'.

@@ -61,7 +61,7 @@ class TablaSimbolos:
                 cruzo_funcion = True
         return encontrado_inaccesible, False
 
-    def normalizar_fn(nodo):
+def normalizar_fn(nodo):
     """El parser genera las funciones con formas distintas:
          ('fn', nombre, cuerpo)
          ('fn', nombre, params, cuerpo)
@@ -73,7 +73,8 @@ class TablaSimbolos:
         return nodo[1], nodo[2], None, nodo[3]
     return nodo[1], nodo[2], nodo[3], nodo[4]
 
-    def posicion_de(nodo):
+
+def posicion_de(nodo):
     """lexpos guardado en el nodo, o None si ese nodo no lo trae."""
     if not isinstance(nodo, tuple) or not nodo:
         return None
@@ -90,7 +91,7 @@ class AnalizadorSemantico:
         self.errores = []   #lista de (linea, columna, mensaje)
         self.tabla = TablaSimbolos()
         self.funciones = set() # nombres de funciones definidas
-        
+
     # -------------------- utilidades ----------------------------
     
     def linea_columna(self, pos):
@@ -306,7 +307,7 @@ class AnalizadorSemantico:
     # REGLA SEMÁNTICA 1: Identificadores declarados antes de su uso
     # --------------------------------------------------------------
 
-    def regla_identificador_declarado(self, noombre, pos):
+    def regla_identificador_declarado(self, nombre, pos):
         simbolo, accesible = self.tabla.buscar(nombre)
         if simbolo is not None and accesible:
             return
@@ -315,7 +316,7 @@ class AnalizadorSemantico:
         if nombre == "self":
             self.error("'self' solo se puede usar dentro de un método de un bloque 'impl' "
                        "que lo reciba como parámetro.", pos)
-        if simbolo is not None:
+        elif simbolo is not None:
             self.error(f"La variable '{nombre}' pertenece a otra función; una 'fn' no puede "
                        "usar variables locales declaradas fuera de ella.", pos)
         else:

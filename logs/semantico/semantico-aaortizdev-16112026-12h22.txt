@@ -1,0 +1,11 @@
+--- Log de análisis semántico (aaortizdev) ---
+Archivo analizado: algoritmos/semantico/algoritmo2_aaortizdev.rs
+Fecha y Hora: 16/11/2026 12:22:18
+
+--- Errores semánticos detectados ---
+[ERROR SEMÁNTICO] Línea 28, Columna 9: No se puede asignar ('-='): el método recibe '&self'; para modificar 'self' debe recibir '&mut self'.
+[ERROR SEMÁNTICO] Línea 33, Columna 9: No se puede asignar ('='): el parámetro 'monto' es inmutable; decláralo como 'mut monto'.
+[ERROR SEMÁNTICO] Línea 50, Columna 5: No se puede llamar a '.push()', que modifica el valor: la variable 'historial' es inmutable (declarada en la línea 41); declárala como 'let mut historial'.
+[ERROR SEMÁNTICO] Línea 54, Columna 32: No se puede tomar '&mut confirmacion': la variable 'confirmacion' es inmutable (declarada en la línea 52); declárala como 'let mut confirmacion'.
+[ERROR SEMÁNTICO] Línea 57, Columna 27: El identificador 'cuenta' no ha sido declarado en este ámbito.
+[ERROR SEMÁNTICO] Línea 60, Columna 5: No se puede asignar ('-=') a la constante 'SALDO_MAXIMO': las constantes no se pueden reasignar.
