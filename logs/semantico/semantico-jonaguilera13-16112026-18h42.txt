@@ -1,0 +1,10 @@
+--- Log de análisis semántico (jonaguilera13) ---
+Archivo analizado: algoritmos/semantico/algoritmo5_jonaguilera13.rs
+Fecha y Hora: 16/11/2026 18:42:07
+
+--- Errores semánticos detectados ---
+[ERROR SEMÁNTICO] Línea 3, Columna 8: La condición de 'if' debe ser 'bool', no 'entero'.
+[ERROR SEMÁNTICO] Línea 8, Columna 11: La condición de 'while' debe ser 'bool', no 'i32'.
+[ERROR SEMÁNTICO] Línea 13, Columna 18: El operador lógico '&&' requiere operandos 'bool': el operando derecho es 'entero'.
+[ERROR SEMÁNTICO] Línea 18, Columna 8: El operador lógico '||' requiere operandos 'bool': el operando izquierdo es 'i32'.
+[ERROR SEMÁNTICO] Línea 23, Columna 9: El operador lógico '!' requiere un operando 'bool', no 'i32'.

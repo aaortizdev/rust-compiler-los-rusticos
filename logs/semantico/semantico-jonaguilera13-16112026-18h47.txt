@@ -1,0 +1,6 @@
+--- Log de análisis semántico (jonaguilera13) ---
+Archivo analizado: algoritmos/semantico/algoritmo6_jonaguilera13.rs
+Fecha y Hora: 16/11/2026 18:47:21
+
+--- Errores semánticos detectados ---
+Ningún error semántico detectado.

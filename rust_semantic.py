@@ -157,22 +157,28 @@ class AnalizadorSemantico:
         if tag == "let":
             mutable, nombre, tipo, valor = s[1], s[2], s[3], s[4]
             self.visitar_expr(valor)
-            self.tabla.declarar(Simbolo(nombre, "variable", tipo, mutable, posicion_de(s)))
+            self.regla_tipo_declaracion(nombre, tipo, valor, posicion_de(s))
+            tipo_variable = tipo if tipo is not None else self.tipo_inferido_declaracion(valor)
+            self.tabla.declarar(Simbolo(nombre, "variable", tipo_variable, mutable, posicion_de(s)))
 
         elif tag == "const":
             self.visitar_expr(s[3])
+            self.regla_tipo_declaracion(s[1], s[2], s[3], posicion_de(s))
 
         elif tag == "assign":
             self.visitar_expr(s[1])
             self.visitar_expr(s[3])
             self.regla_mutabilidad_asignacion(s)
+            self.regla_tipo_asignacion(s)
 
         elif tag == "while":
             self.visitar_expr(s[1])
+            self.regla_condicion_booleana(s[1], "while")
             self.visitar_bloque(s[2])
 
         elif tag == "if":
             self.visitar_expr(s[1])
+            self.regla_condicion_booleana(s[1], "if")
             self.visitar_bloque(s[2])
             otro = s[3]
             if isinstance(otro, tuple) and otro[0] == "if":
@@ -259,9 +265,12 @@ class AnalizadorSemantico:
         elif tag == "binop":
             self.visitar_expr(e[2])
             self.visitar_expr(e[3])
+            self.regla_tipos_operacion(e)
 
         elif tag in ("neg", "not"):
             self.visitar_expr(e[1])
+            if tag == "not":
+                self.regla_negacion_booleana(e)
 
         elif tag in ("array", "tuple", "vec"):
             for elemento in e[1]:

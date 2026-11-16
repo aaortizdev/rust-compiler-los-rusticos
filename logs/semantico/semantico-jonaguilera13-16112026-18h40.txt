@@ -1,0 +1,11 @@
+--- Log de análisis semántico (jonaguilera13) ---
+Archivo analizado: algoritmos/semantico/algoritmo4_jonaguilera13.rs
+Fecha y Hora: 16/11/2026 18:40:53
+
+--- Errores semánticos detectados ---
+[ERROR SEMÁNTICO] Línea 3, Columna 24: Tipo incompatible al declarar 'mensaje': se esperaba 'i32', pero se obtuvo '&str'.
+[ERROR SEMÁNTICO] Línea 9, Columna 16: Operación '+' con tipos incompatibles: 'i32' y 'f64'.
+[ERROR SEMÁNTICO] Línea 12, Columna 18: Operación '+' con tipos incompatibles: 'entero' y 'bool'.
+[ERROR SEMÁNTICO] Línea 17, Columna 5: Asignación '=' incompatible: el destino es 'i32' y el valor es 'bool'.
+[ERROR SEMÁNTICO] Línea 20, Columna 5: Asignación '+=' incompatible: el destino es 'i32' y el valor es 'decimal'.
+[ERROR SEMÁNTICO] Línea 23, Columna 26: Tipo incompatible al declarar 'ACTIVO': se esperaba 'bool', pero se obtuvo 'entero'.
