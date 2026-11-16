@@ -17,11 +17,11 @@ def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
 
     lexer.input(codigo_fuente)
 
-    os.makedirs("logs", exist_ok=True)
+    os.makedirs("logs/lexico", exist_ok=True)
 
     ahora = datetime.now()
     fecha_hora = ahora.strftime("%d-%m-%Y-%Hh%M")
-    nombre_log = f"logs/lexico-{usuario_git}-{fecha_hora}.txt"
+    nombre_log = f"logs/lexico/lexico-{usuario_git}-{fecha_hora}.txt"
 
     lineas_log = []
     lineas_log.append(f"--- Log de análisis léxico ({usuario_git}) ---")
@@ -78,9 +78,9 @@ def run_parser(path, git_user="ChrisPal2307"):
     for error in rust_parser.syntax_errors:
         print(error)
 
-    os.makedirs("logs", exist_ok=True)
+    os.makedirs("logs/sintactico", exist_ok=True)
     ahora = datetime.now()
-    log_path = f"logs/Sintáctico/sintactico-{git_user}-{ahora.strftime('%Y%m%d-%Hh%M')}.txt"
+    log_path = f"logs/sintactico/sintactico-{git_user}-{ahora.strftime('%Y%m%d-%Hh%M')}.txt"
 
     lineas = [
         f"--- Log de análisis sintáctico ({git_user}) ---",
@@ -94,7 +94,7 @@ def run_parser(path, git_user="ChrisPal2307"):
         log.write("\n".join(lineas))
     print(f"[OK] Log generado en: {log_path}")
 
-CARPETA_LOGS_SEMANTICO = os.path.join("logs", "semántico")
+CARPETA_LOGS_SEMANTICO = os.path.join("logs", "semantico")
 
 def run_semantic(path, git_user="aaortizdev"):
     with open(path, encoding="utf-8") as f:
