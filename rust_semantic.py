@@ -611,7 +611,70 @@ class AnalizadorSemantico:
             if expr[0] in ("not", "neg", "index", "field_access", "borrow_mut"):
                 return self.posicion_expresion(expr[1])
         return None
+    
+    # Regla Semántica 1- Compatibilidad de Tipos
+    def regla_tipo_declaracion(self, nombre, tipo, valor, pos):
+        esperado = self.normalizar_tipo(tipo)
+        recibido = self.tipo_expresion(valor)
+        if esperado is not None and recibido is not None and not self.tipos_compatibles(esperado, recibido):
+            self.error(
+                f"Tipo incompatible al declarar '{nombre}': se esperaba "
+                f"'{self.nombre_tipo(esperado)}', pero se obtuvo "
+                f"'{self.nombre_tipo(recibido)}'.",
+                self.posicion_expresion(valor) if self.posicion_expresion(valor) is not None else pos,
+            )
 
+    def regla_tipo_asignacion(self, nodo):
+        _, destino, operador, valor = nodo
+        esperado = self.tipo_expresion(destino)
+        recibido = self.tipo_expresion(valor)
+        if esperado is None or recibido is None:
+            return
+        pos = self.posicion_expresion(destino)
+        if operador == "=":
+            valido = self.tipos_compatibles(esperado, recibido)
+        elif operador in ("+=", "-=", "*=", "/=", "%="):
+            # El resultado de la operación compuesta debe conservar el tipo.
+            valido = self.unificar_numericos(esperado, recibido) == esperado
+        elif operador in ("&=", "|=", "^="):
+            valido = (esperado == recibido == "bool" or
+                      (esperado in self.ENTEROS and self.tipos_compatibles(esperado, recibido)))
+        elif operador in ("<<=", ">>="):
+            valido = (esperado in self.ENTEROS and
+                      (recibido in self.ENTEROS or recibido == "entero_literal"))
+        else:
+            return
+        if not valido:
+            self.error(
+                f"Asignación '{operador}' incompatible: el destino es "
+                f"'{self.nombre_tipo(esperado)}' y el valor es "
+                f"'{self.nombre_tipo(recibido)}'.", pos)
+
+    def regla_tipos_operacion(self, expr):
+        _, op, izquierda, derecha = expr
+        t_izq, t_der = self.tipo_expresion(izquierda), self.tipo_expresion(derecha)
+        if op in ("&&", "||"):
+            # La comprobación independiente permite detectar cada operando
+            # incorrecto sin generar errores en cascada en los nodos padres.
+            for lado, tipo, subexpr in (("izquierdo", t_izq, izquierda),
+                                        ("derecho", t_der, derecha)):
+                if tipo is not None and tipo != "bool":
+                    self.error(
+                        f"El operador lógico '{op}' requiere operandos 'bool': "
+                        f"el operando {lado} es '{self.nombre_tipo(tipo)}'.",
+                        self.posicion_expresion(subexpr))
+        elif t_izq is not None and t_der is not None:
+            if op in self.ARITMETICOS:
+                valido = self.unificar_numericos(t_izq, t_der) is not None
+            elif op in self.COMPARACIONES:
+                valido = self.tipos_comparables(t_izq, t_der, op)
+            else:
+                return
+            if not valido:
+                self.error(
+                    f"Operación '{op}' con tipos incompatibles: "
+                    f"'{self.nombre_tipo(t_izq)}' y '{self.nombre_tipo(t_der)}'.",
+                    self.posicion_expresion(expr))
 
     # ============================================================
     # FIN APORTE: @jonaguilera13 (Carlos Aguilera)
