@@ -1,0 +1,11 @@
+--- Log de análisis semántico (aaortizdev) ---
+Archivo analizado: algoritmos/semantico/algoritmo3_aaortizdev.rs
+Fecha y Hora: 16/11/2026 12:02:15
+
+--- Errores semánticos detectados ---
+[ERROR SEMÁNTICO] Línea 16, Columna 37: El identificador 'producto' no ha sido declarado en este ámbito.
+[ERROR SEMÁNTICO] Línea 28, Columna 20: El identificador 'otro' no ha sido declarado en este ámbito.
+[ERROR SEMÁNTICO] Línea 38, Columna 9: No se puede asignar ('+='): 'j' es la variable del ciclo 'for' y no se puede modificar.
+[ERROR SEMÁNTICO] Línea 50, Columna 21: El identificador 'mensaje' no ha sido declarado en este ámbito.
+[ERROR SEMÁNTICO] Línea 54, Columna 24: La variable 'total' pertenece a otra función; una 'fn' no puede usar variables locales declaradas fuera de ella.
+[ERROR SEMÁNTICO] Línea 58, Columna 5: No se puede asignar ('='): la variable 'limite' es inmutable (declarada en la línea 42); declárala como 'let mut limite'.

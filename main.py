@@ -1,9 +1,11 @@
+import argparse
 import os
 import re
 from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 import rust_parser
+import rust_semantic
 from rust_lexer import lexer, lexical_errors, find_column
 
 def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
@@ -15,11 +17,11 @@ def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
 
     lexer.input(codigo_fuente)
 
-    os.makedirs("logs", exist_ok=True)
+    os.makedirs("logs/lexico", exist_ok=True)
 
     ahora = datetime.now()
     fecha_hora = ahora.strftime("%d-%m-%Y-%Hh%M")
-    nombre_log = f"logs/lexico-{usuario_git}-{fecha_hora}.txt"
+    nombre_log = f"logs/lexico/lexico-{usuario_git}-{fecha_hora}.txt"
 
     lineas_log = []
     lineas_log.append(f"--- Log de análisis léxico ({usuario_git}) ---")
@@ -76,9 +78,9 @@ def run_parser(path, git_user="ChrisPal2307"):
     for error in rust_parser.syntax_errors:
         print(error)
 
-    os.makedirs("logs", exist_ok=True)
+    os.makedirs("logs/sintactico", exist_ok=True)
     ahora = datetime.now()
-    log_path = f"logs/Sintáctico/sintactico-{git_user}-{ahora.strftime('%Y%m%d-%Hh%M')}.txt"
+    log_path = f"logs/sintactico/sintactico-{git_user}-{ahora.strftime('%Y%m%d-%Hh%M')}.txt"
 
     lineas = [
         f"--- Log de análisis sintáctico ({git_user}) ---",
@@ -91,6 +93,61 @@ def run_parser(path, git_user="ChrisPal2307"):
     with open(log_path, "w", encoding="utf-8") as log:
         log.write("\n".join(lineas))
     print(f"[OK] Log generado en: {log_path}")
+
+CARPETA_LOGS_SEMANTICO = os.path.join("logs", "semantico")
+
+def run_semantic(path, git_user="aaortizdev"):
+    with open(path, encoding="utf-8") as f:
+        data = f.read()
+
+    # 1. Análisis sintáctico para obtener el árbol (sin imprimir sus mensajes)
+    rust_parser.syntax_errors.clear()
+    rust_parser.lexer.lineno = 1
+    with redirect_stdout(StringIO()):
+        ast = rust_parser.parser.parse(data, lexer=rust_parser.lexer, tracking=True)
+    errores_sintacticos = len(rust_parser.syntax_errors)
+
+    # 2. Análisis semántico sobre el árbol
+    errores = rust_semantic.analizar(ast, data)
+
+    for error in errores:
+        print(error)
+
+    ahora = datetime.now()
+    os.makedirs(CARPETA_LOGS_SEMANTICO, exist_ok=True)
+    log_path = os.path.join(
+        CARPETA_LOGS_SEMANTICO,
+        f"semantico-{git_user}-{ahora.strftime('%d%m%Y-%Hh%M')}.txt",
+    )
+
+    lineas = [
+        f"--- Log de análisis semántico ({git_user}) ---",
+        f"Archivo analizado: {path}",
+        f"Fecha y Hora: {ahora.strftime('%d/%m/%Y %H:%M:%S')}\n",
+    ]
+    if ast is None:
+        lineas.append("[AVISO] No se pudo construir el árbol sintáctico; "
+                      "corrija los errores sintácticos para ejecutar el análisis semántico.\n")
+    elif errores_sintacticos:
+        lineas.append(f"[AVISO] El archivo tiene {errores_sintacticos} error(es) sintáctico(s); "
+                      "el análisis semántico puede estar incompleto.\n")
+    lineas.append("--- Errores semánticos detectados ---")
+    lineas += errores or ["Ningún error semántico detectado."]
+
+    with open(log_path, "w", encoding="utf-8") as log:
+        log.write("\n".join(lineas))
+    print(f"[OK] Log generado en: {log_path}")
     
 if __name__ == "__main__":
-    run_parser("algoritmos/Sintáctico/algoritmo9_ChrisPal2307.rs")
+    argumentos = argparse.ArgumentParser(description="Analizador de Rust con PLY")
+    argumentos.add_argument("modo", choices=["lexico", "sintactico", "semantico"])
+    argumentos.add_argument("archivo", help="Ruta del archivo .rs a analizar")
+    argumentos.add_argument("usuario", help="Usuario de Git para el nombre del log")
+    args = argumentos.parse_args()
+
+    if args.modo == "lexico":
+        analizar_archivo_y_generar_log(args.archivo, args.usuario)
+    elif args.modo == "sintactico":
+        run_parser(args.archivo, args.usuario)
+    else:
+        run_semantic(args.archivo, args.usuario)
