@@ -437,7 +437,8 @@ class AnalizadorSemantico:
 
     # ============================================================
     # INICIO APORTE: @jonaguilera13 (Carlos Aguilera)
-    # Compatibilidad de tipos en declaraciones, asignaciones y operaciones binarias. Regla 2: condiciones y operadores lógicos obligatoriamente booleanos.
+
+    # Compatibilidad de tipos en declaraciones, asignaciones y operaciones binarias.
     # ============================================================
 
     ENTEROS = frozenset({
