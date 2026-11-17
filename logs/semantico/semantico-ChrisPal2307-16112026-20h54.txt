@@ -1,0 +1,14 @@
+--- Log de análisis semántico (ChrisPal2307) ---
+Archivo analizado: algoritmo8_ChrisPal2307.rs
+Fecha y Hora: 16/11/2026 20:54:39
+
+--- Errores semánticos detectados ---
+[ERROR SEMÁNTICO] Línea 14, Columna 12: Tipo de retorno incompatible: se esperaba 'i32', pero se obtuvo '&str'.
+[ERROR SEMÁNTICO] Línea 20, Columna 5: Tipo de expresión final incompatible: se esperaba 'bool', pero se obtuvo 'i32'.
+[ERROR SEMÁNTICO] Línea 25, Columna 12: La función no declara un tipo de retorno, pero se intenta devolver 'entero'.
+[ERROR SEMÁNTICO] Línea 31, Columna 5: La función no declara un tipo de retorno, pero termina con una expresión de tipo 'i32' (¿falta ';'?).
+[ERROR SEMÁNTICO] Línea 36, Columna 5: Se esperaba un valor de retorno de tipo 'i32', pero se encontró 'return' vacío.
+[ERROR SEMÁNTICO] Línea 41, Columna 9: La función declara retorno 'i32', pero no devuelve ningún valor al final.
+[ERROR SEMÁNTICO] Línea 48, Columna 13: La función 'funcion_inexistente' no está definida en este ámbito.
+[ERROR SEMÁNTICO] Línea 51, Columna 13: La función 'sumar' espera 2 argumento(s), pero recibió 1.
+[ERROR SEMÁNTICO] Línea 54, Columna 26: Argumento 2 incompatible en llamada a 'saludar': se esperaba 'i32', pero se obtuvo 'bool'.

@@ -1,0 +1,9 @@
+--- Log de análisis semántico (ChrisPal2307) ---
+Archivo analizado: algoritmo7_ChrisPal2307.rs
+Fecha y Hora: 16/11/2026 20:34:32
+
+--- Errores semánticos detectados ---
+[ERROR SEMÁNTICO] Línea 43, Columna 12: Tipo de retorno incompatible: se esperaba 'i32', pero se obtuvo '&str'.
+[ERROR SEMÁNTICO] Línea 47, Columna 5: Tipo de expresión final incompatible: se esperaba 'i32', pero se obtuvo '&str'.
+[ERROR SEMÁNTICO] Línea 51, Columna 12: La función no declara un tipo de retorno, pero se intenta devolver 'entero'.
+[ERROR SEMÁNTICO] Línea 55, Columna 5: La función no declara un tipo de retorno, pero termina con una expresión de tipo '&str' (¿falta ';'?).
