@@ -78,7 +78,10 @@ def posicion_de(nodo):
     """lexpos guardado en el nodo, o None si ese nodo no lo trae."""
     if not isinstance(nodo, tuple) or not nodo:
         return None
-    indices = {"var": 2, "lit": 2, "let": 5, "const": 4}
+    indices = {
+        "var": 2, "lit": 2, "let": 5, "const": 4,
+        "call": 3, "return": 2,
+    }
     indice = indices.get(nodo[0])
     if indice is not None and len(nodo) > indice:
         return nodo[indice]
@@ -91,6 +94,8 @@ class AnalizadorSemantico:
         self.errores = []   #lista de (linea, columna, mensaje)
         self.tabla = TablaSimbolos()
         self.funciones = set() # nombres de funciones definidas
+        self.retornos_funcion = []
+        self.firmas_funciones = {}
 
     # -------------------- utilidades ----------------------------
     
@@ -122,7 +127,19 @@ class AnalizadorSemantico:
             if not isinstance(s, tuple) or not s:
                 continue
             if s[0] == "fn":
-                self.funciones.add(s[1])
+                nombre, params, retorno, _ = normalizar_fn(s)
+                self.funciones.add(nombre)
+                
+                tipos_params = []
+                for p in params:
+                    if p[0] == "param":
+                        # p = ('param', nombre_param, tipo_param, mutable)
+                        tipos_params.append(self.normalizar_tipo(p[2]))
+                
+                self.firmas_funciones[nombre] = {
+                    "params": tipos_params,
+                    "retorno": self.normalizar_tipo(retorno)
+                }
             elif s[0] == "const":
                 self.tabla.declarar(Simbolo(s[1], "constante", s[2], False, posicion_de(s)))
 
@@ -137,7 +154,7 @@ class AnalizadorSemantico:
             self.visitar_sentencia(s)
         return self.lista_errores()
 
-    def visitar_bloque(self, bloque, simbolos_previos=()):
+    def visitar_bloque(self, bloque, simbolos_previos=(), verificar_expresion_final=False):
         """Abre un ámbito, declara simbolos_previos (parámetros, variable del
         for, etc.), recorre las sentencias y cierra el ámbito."""
         sentencias = bloque[1] if isinstance(bloque, tuple) and bloque[0] == "block" else []
@@ -147,6 +164,12 @@ class AnalizadorSemantico:
         self.registrar_elementos(sentencias)
         for s in sentencias:
             self.visitar_sentencia(s)
+        if sentencias and isinstance(sentencias[-1], tuple):
+            ultima = sentencias[-1]
+            if ultima and ultima[0] in self.EXPRESIONES:
+                self.visitar_expr(ultima)
+        if verificar_expresion_final:
+            self.regla_tipo_expresion_final(sentencias)
         self.tabla.cerrar_ambito()
 
     def visitar_sentencia(self, s):
@@ -210,6 +233,7 @@ class AnalizadorSemantico:
         elif tag == "return":
             if s[1] is not None:
                 self.visitar_expr(s[1])
+            self.regla_tipo_retorno(s[1], posicion_de(s))
 
         elif tag == "print_macro":
             for arg in s[2]:
@@ -221,6 +245,7 @@ class AnalizadorSemantico:
 
     def visitar_funcion(self, nombre, params, retorno, cuerpo):
         self.tabla.abrir_ambito(frontera_funcion=True)
+        self.retornos_funcion.append(self.normalizar_tipo(retorno))
         simbolos = []
         for p in params:
             if p[0] == "param":
@@ -229,8 +254,11 @@ class AnalizadorSemantico:
                 mutable = p[1] in ("&mut self", "mut self")
                 simbolos.append(Simbolo("self", "self", None, mutable))
                 simbolos[-1].receptor = p[1]
-        self.visitar_bloque(cuerpo, simbolos)
-        self.tabla.cerrar_ambito()
+        try:
+            self.visitar_bloque(cuerpo, simbolos, verificar_expresion_final=True)
+        finally:
+            self.retornos_funcion.pop()
+            self.tabla.cerrar_ambito()
 
     def visitar_match(self, nodo):
         self.visitar_expr(nodo[1])
@@ -291,6 +319,7 @@ class AnalizadorSemantico:
         elif tag == "call":
             for arg in e[2]:
                 self.visitar_expr(arg)
+            self.regla_llamada_funcion(e)
 
         elif tag == "method_call":
             self.visitar_expr(e[1])
@@ -605,6 +634,11 @@ class AnalizadorSemantico:
             if (isinstance(tipo, tuple) and tipo[0] == "tuple" and
                     isinstance(indice, int) and 0 <= indice < len(tipo[1])):
                 return tipo[1][indice]
+        if etiqueta == "call":
+            callee = expr[1]
+            nombre = callee[1] if isinstance(callee, tuple) and callee[0] == "var" else callee
+            firma = self.firmas_funciones.get(nombre)
+            return firma["retorno"] if firma is not None else None
         return None
 
     def tipo_inferido_declaracion(self, expr):
@@ -718,8 +752,139 @@ class AnalizadorSemantico:
     # INICIO APORTE: @ChrisPal2307 (Christian Palma)
     # ============================================================
 
+    EXPRESIONES = frozenset({
+    "lit", "var", "binop", "not", "neg", "array", "tuple", "vec",
+    "vec_repeat", "index", "field_access", "call", "method_call",
+    "assoc_call", "path_call", "borrow_mut", "match",
+    })
+
+    def regla_tipo_retorno(self, expr_retorno, pos=None):
+        if not self.retornos_funcion:
+            return  # Por seguridad si se usa return fuera de una función
+
+        esperado = self.retornos_funcion[-1]
+
+        # Caso 1: La función NO tiene tipo de retorno (-> T), es tipo unidad ()
+        if esperado is None:
+            if expr_retorno is not None:
+                recibido = self.tipo_expresion(expr_retorno)
+                tipo_str = self.nombre_tipo(recibido) if recibido else "un valor"
+                self.error(
+                    f"La función no declara un tipo de retorno, pero se intenta devolver '{tipo_str}'.",
+                    self.posicion_expresion(expr_retorno)
+                )
+            return
+
+        # Caso 2: La función declara -> T, pero hace un 'return;' vacío
+        if expr_retorno is None:
+            self.error(
+                f"Se esperaba un valor de retorno de tipo '{self.nombre_tipo(esperado)}', "
+                "pero se encontró 'return' vacío.",
+                pos
+            )
+            return
+
+        # Caso 3: La función declara -> T y devuelve una expresión
+        recibido = self.tipo_expresion(expr_retorno)
+        if recibido is not None and not self.tipos_compatibles(esperado, recibido):
+            self.error(
+                f"Tipo de retorno incompatible: se esperaba '{self.nombre_tipo(esperado)}', "
+                f"pero se obtuvo '{self.nombre_tipo(recibido)}'.",
+                self.posicion_expresion(expr_retorno)
+            )
 
 
+    def regla_tipo_expresion_final(self, sentencias):
+        if not self.retornos_funcion:
+            return
+
+        esperado = self.retornos_funcion[-1]
+
+        # Si el bloque está vacío
+        if not sentencias:
+            if esperado is not None:
+                self.error(
+                    f"La función debe devolver un valor de tipo '{self.nombre_tipo(esperado)}', pero su cuerpo está vacío."
+                )
+            return
+
+        ultima = sentencias[-1]
+        es_expresion_final = isinstance(ultima, tuple) and ultima and ultima[0] in self.EXPRESIONES
+
+        # Caso 1: La función declara -> T
+        if esperado is not None:
+            if es_expresion_final:
+                recibido = self.tipo_expresion(ultima)
+                if recibido is not None and not self.tipos_compatibles(esperado, recibido):
+                    self.error(
+                        f"Tipo de expresión final incompatible: se esperaba '{self.nombre_tipo(esperado)}', "
+                        f"pero se obtuvo '{self.nombre_tipo(recibido)}'.",
+                        self.posicion_expresion(ultima)
+                    )
+            else:
+                # Si la última sentencia no es expresión (ej. es 'let', 'expr_stmt' con ';', 'while'),
+                # verificamos si al menos hubo un 'return' explícito en el bloque para no dar falso positivo.
+                tiene_return = any(isinstance(s, tuple) and s and s[0] == "return" for s in sentencias)
+                if not tiene_return:
+                    self.error(
+                        f"La función declara retorno '{self.nombre_tipo(esperado)}', "
+                        "pero no devuelve ningún valor al final.",
+                        posicion_de(ultima) or self.posicion_expresion(ultima)
+                    )
+
+        # Caso 2: La función NO declara tipo de retorno, pero termina con una expresión sin ';'
+        elif es_expresion_final:
+            recibido = self.tipo_expresion(ultima)
+            tipo_str = self.nombre_tipo(recibido) if recibido else "un valor"
+            self.error(
+                f"La función no declara un tipo de retorno, pero termina con una expresión de tipo '{tipo_str}' (¿falta ';'?)." ,
+                self.posicion_expresion(ultima)
+            )
+
+    def regla_llamada_funcion(self, nodo):
+        callee = nodo[1]
+        argumentos = nodo[2]
+
+        # Extraer nombre y posición según cómo el parser construya el nodo 'call'
+        if isinstance(callee, tuple) and callee[0] == "var":
+            nombre = callee[1]
+            pos_llamada = posicion_de(callee)
+        else:
+            nombre = callee
+            pos_llamada = posicion_de(nodo)
+
+        # 1. Verificar que la función exista
+        if nombre not in self.firmas_funciones:
+            self.error(
+                f"La función '{nombre}' no está definida en este ámbito.",
+                pos_llamada
+            )
+            return
+
+        firma = self.firmas_funciones[nombre]
+        params_esperados = firma["params"]
+
+        # 2. Verificar cantidad de argumentos
+        if len(argumentos) != len(params_esperados):
+            self.error(
+                f"La función '{nombre}' espera {len(params_esperados)} argumento(s), "
+                f"pero recibió {len(argumentos)}.",
+                pos_llamada
+            )
+            return
+
+        # 3. Verificar tipo de cada argumento uno a uno
+        for i, (arg, tipo_esperado) in enumerate(zip(argumentos, params_esperados), start=1):
+            tipo_recibido = self.tipo_expresion(arg)
+            if tipo_esperado is not None and tipo_recibido is not None:
+                if not self.tipos_compatibles(tipo_esperado, tipo_recibido):
+                    pos_arg = self.posicion_expresion(arg) or pos_llamada
+                    self.error(
+                        f"Argumento {i} incompatible en llamada a '{nombre}': "
+                        f"se esperaba '{self.nombre_tipo(tipo_esperado)}', "
+                        f"pero se obtuvo '{self.nombre_tipo(tipo_recibido)}'.",
+                        pos_arg
+                    )
     # ============================================================
     # FIN APORTE: @ChrisPal2307 (Christian Palma)
     # ============================================================

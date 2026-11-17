@@ -54,8 +54,15 @@ def p_statement_list(p):
 
 def p_block(p):
     '''block : LBRACE statement_list RBRACE
+             | LBRACE statement_list expression RBRACE
+             | LBRACE expression RBRACE
              | LBRACE RBRACE'''
-    p[0] = ('block', p[2] if len(p) == 4 else [])
+    if len(p) == 5:
+        p[0] = ('block', p[2] + [p[3]])
+    elif len(p) == 4 and not isinstance(p[2], list):
+        p[0] = ('block', [p[2]])
+    else:
+        p[0] = ('block', p[2] if len(p) == 4 else [])
 
 
 def p_empty(p):
@@ -370,7 +377,7 @@ def p_fn_parameter(p):
 # Para poder utilizar las funciones definidas.
 def p_function_call(p):
     '''function_call : IDENTIFIER LPAREN call_arguments_opt RPAREN'''
-    p[0] = ('call', p[1], p[3])
+    p[0] = ('call', p[1], p[3], p.lexpos(1))
 
 
 def p_call_arguments_opt(p):
@@ -638,7 +645,8 @@ def p_statement_fn_missing_return_type(p):
 def p_statement_return(p):
     '''statement : RETURN expression SEMICOLON
                  | RETURN SEMICOLON'''
-    p[0] = ('return', p[2]) if len(p) == 4 else ('return', None)
+    expresion = p[2] if len(p) == 4 else None
+    p[0] = ('return', expresion, p.lexpos(1))
 
 
 def p_statement_print_macro(p):
