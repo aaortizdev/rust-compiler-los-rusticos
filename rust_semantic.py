@@ -157,22 +157,28 @@ class AnalizadorSemantico:
         if tag == "let":
             mutable, nombre, tipo, valor = s[1], s[2], s[3], s[4]
             self.visitar_expr(valor)
-            self.tabla.declarar(Simbolo(nombre, "variable", tipo, mutable, posicion_de(s)))
+            self.regla_tipo_declaracion(nombre, tipo, valor, posicion_de(s))
+            tipo_variable = tipo if tipo is not None else self.tipo_inferido_declaracion(valor)
+            self.tabla.declarar(Simbolo(nombre, "variable", tipo_variable, mutable, posicion_de(s)))
 
         elif tag == "const":
             self.visitar_expr(s[3])
+            self.regla_tipo_declaracion(s[1], s[2], s[3], posicion_de(s))
 
         elif tag == "assign":
             self.visitar_expr(s[1])
             self.visitar_expr(s[3])
             self.regla_mutabilidad_asignacion(s)
+            self.regla_tipo_asignacion(s)
 
         elif tag == "while":
             self.visitar_expr(s[1])
+            self.regla_condicion_booleana(s[1], "while")
             self.visitar_bloque(s[2])
 
         elif tag == "if":
             self.visitar_expr(s[1])
+            self.regla_condicion_booleana(s[1], "if")
             self.visitar_bloque(s[2])
             otro = s[3]
             if isinstance(otro, tuple) and otro[0] == "if":
@@ -259,9 +265,12 @@ class AnalizadorSemantico:
         elif tag == "binop":
             self.visitar_expr(e[2])
             self.visitar_expr(e[3])
+            self.regla_tipos_operacion(e)
 
         elif tag in ("neg", "not"):
             self.visitar_expr(e[1])
+            if tag == "not":
+                self.regla_negacion_booleana(e)
 
         elif tag in ("array", "tuple", "vec"):
             for elemento in e[1]:
@@ -277,6 +286,7 @@ class AnalizadorSemantico:
 
         elif tag == "field_access":
             self.visitar_expr(e[1])
+            self.regla_acceso_tupla(e)
 
         elif tag == "call":
             for arg in e[2]:
@@ -427,10 +437,278 @@ class AnalizadorSemantico:
 
     # ============================================================
     # INICIO APORTE: @jonaguilera13 (Carlos Aguilera)
+
+    # Compatibilidad de tipos en declaraciones, asignaciones y operaciones binarias.
     # ============================================================
 
+    ENTEROS = frozenset({
+        "i8", "i16", "i32", "i64", "i128", "isize",
+        "u8", "u16", "u32", "u64", "u128", "usize",
+    })
+    FLOTANTES = frozenset({"f32", "f64"})
+    ARITMETICOS = frozenset({"+", "-", "*", "/", "%"})
+    COMPARACIONES = frozenset({"==", "!=", "<", "<=", ">", ">="})
 
+    #Convierte los nodos de tipo del parser a una forma comparable.
+    def normalizar_tipo(self, tipo):
+        if tipo is None or isinstance(tipo, str):
+            return tipo
+        if not isinstance(tipo, tuple):
+            return None
+        etiqueta = tipo[0]
+        if etiqueta in ("type", "named_type"):
+            return tipo[1]
+        if etiqueta in ("tuple_type", "tuple"):
+            return ("tuple", tuple(self.normalizar_tipo(t) for t in tipo[1]))
+        if etiqueta in ("array_type", "array"):
+            return ("array", self.normalizar_tipo(tipo[1]))
+        if etiqueta in ("vec_type", "vec"):
+            return ("vec", self.normalizar_tipo(tipo[1]))
+        return None
+    #Muestra tipos de forma comprensible en los errores.
+    def nombre_tipo(self, tipo):
+        if tipo == "entero_literal":
+            return "entero"
+        if tipo == "flotante_literal":
+            return "decimal"
+        if isinstance(tipo, tuple):
+            if tipo[0] == "tuple":
+                return "(" + ", ".join(self.nombre_tipo(t) for t in tipo[1]) + ")"
+            if tipo[0] == "array":
+                return "[" + self.nombre_tipo(tipo[1]) + "]"
+            if tipo[0] == "vec":
+                return "Vec<" + self.nombre_tipo(tipo[1]) + ">"
+        return str(tipo)
 
+    #Al inferir un let sin anotación, Rust usará i32 o f64 por defecto.
+    def materializar_tipo(self, tipo):
+        if tipo == "entero_literal":
+            return "i32"
+        if tipo == "flotante_literal":
+            return "f64"
+        if isinstance(tipo, tuple):
+            if tipo[0] == "tuple":
+                return ("tuple", tuple(self.materializar_tipo(t) for t in tipo[1]))
+            return (tipo[0], self.materializar_tipo(tipo[1]))
+        return tipo
+
+    #No hace conversiones implícitas entre familias ni tipos distintos.
+    def tipos_compatibles(self, esperado, recibido):
+        if esperado is None or recibido is None:
+            return True
+        if esperado == recibido:
+            return True
+        if recibido == "entero_literal" and esperado in self.ENTEROS:
+            return True
+        if recibido == "flotante_literal" and esperado in self.FLOTANTES:
+            return True
+        if isinstance(esperado, tuple) and isinstance(recibido, tuple):
+            if esperado[0] != recibido[0]:
+                return False
+            if esperado[0] == "tuple":
+                return (len(esperado[1]) == len(recibido[1]) and
+                        all(self.tipos_compatibles(a, b)
+                            for a, b in zip(esperado[1], recibido[1])))
+            if esperado[0] in ("array", "vec"):
+                return self.tipos_compatibles(esperado[1], recibido[1])
+        return False
+    
+    #Tipo resultante si ambos operandos son numéricos compatibles.
+    def unificar_numericos(self, izquierdo, derecho):
+        if izquierdo == derecho and izquierdo in (
+                self.ENTEROS | self.FLOTANTES | {"entero_literal", "flotante_literal"}):
+            return izquierdo
+        if izquierdo == "entero_literal" and derecho in self.ENTEROS:
+            return derecho
+        if derecho == "entero_literal" and izquierdo in self.ENTEROS:
+            return izquierdo
+        if izquierdo == "flotante_literal" and derecho in self.FLOTANTES:
+            return derecho
+        if derecho == "flotante_literal" and izquierdo in self.FLOTANTES:
+            return izquierdo
+        return None
+
+    #Igualdad para tipos iguales, orden solamente en números o caracteres.
+    def tipos_comparables(self, izquierdo, derecho, operador):
+        if operador in ("==", "!="):
+            if izquierdo == derecho:
+                return True
+            return (self.unificar_numericos(izquierdo, derecho) is not None)
+        return (self.unificar_numericos(izquierdo, derecho) is not None or
+                (izquierdo == derecho == "char"))
+
+    #Obtiene un tipo inferido sin emitir errores ni visitar dos veces el AST.
+    def tipo_expresion(self, expr):
+        if not isinstance(expr, tuple) or not expr:
+            return None
+        etiqueta = expr[0]
+
+        if etiqueta == "lit":
+            valor = expr[1]
+            if isinstance(valor, bool) or valor in ("true", "false"):
+                return "bool"
+            if isinstance(valor, int):
+                return "entero_literal"
+            if isinstance(valor, float):
+                return "flotante_literal"
+            if isinstance(valor, str):
+                if valor.startswith('"'):
+                    return "&str"
+                if valor.startswith("'"):
+                    return "char"
+            return None
+
+        if etiqueta == "var":
+            simbolo, accesible = self.tabla.buscar(expr[1])
+            return self.normalizar_tipo(simbolo.tipo) if simbolo is not None and accesible else None
+
+        if etiqueta == "binop":
+            _, op, izquierdo, derecho = expr
+            t_izq, t_der = self.tipo_expresion(izquierdo), self.tipo_expresion(derecho)
+            if t_izq is None or t_der is None:
+                return None
+            if op in self.ARITMETICOS:
+                return self.unificar_numericos(t_izq, t_der)
+            if op in ("&&", "||"):
+                return "bool" if t_izq == t_der == "bool" else None
+            if op in self.COMPARACIONES:
+                return "bool" if self.tipos_comparables(t_izq, t_der, op) else None
+            return None
+
+        if etiqueta == "not":
+            return "bool" if self.tipo_expresion(expr[1]) == "bool" else None
+        if etiqueta == "neg":
+            t = self.tipo_expresion(expr[1])
+            return t if t in (self.ENTEROS | self.FLOTANTES |
+                              {"entero_literal", "flotante_literal"}) else None
+        if etiqueta == "tuple":
+            return ("tuple", tuple(self.tipo_expresion(e) for e in expr[1]))
+        if etiqueta in ("array", "vec"):
+            if not expr[1]:
+                return None
+            primero = self.tipo_expresion(expr[1][0])
+            if primero is None or not all(
+                    self.tipos_compatibles(primero, self.tipo_expresion(x))
+                    for x in expr[1][1:]):
+                return None
+            return (etiqueta, primero)
+        if etiqueta == "vec_repeat":
+            tipo = self.tipo_expresion(expr[1])
+            return ("vec", tipo) if tipo is not None else None
+        if etiqueta == "index":
+            tipo = self.tipo_expresion(expr[1])
+            if isinstance(tipo, tuple) and tipo[0] in ("array", "vec"):
+                return tipo[1]
+        if etiqueta == "field_access":
+            tipo = self.tipo_expresion(expr[1])
+            indice = expr[2]
+            if (isinstance(tipo, tuple) and tipo[0] == "tuple" and
+                    isinstance(indice, int) and 0 <= indice < len(tipo[1])):
+                return tipo[1][indice]
+        return None
+
+    def tipo_inferido_declaracion(self, expr):
+        return self.materializar_tipo(self.tipo_expresion(expr))
+
+    #Primer token conocido de la expresión, el AST no guarda operadores.
+    def posicion_expresion(self, expr):
+        pos = posicion_de(expr)
+        if pos is not None:
+            return pos
+        if isinstance(expr, tuple) and expr:
+            if expr[0] == "binop":
+                izquierdo = self.posicion_expresion(expr[2])
+                return izquierdo if izquierdo is not None else self.posicion_expresion(expr[3])
+            if expr[0] in ("not", "neg", "index", "field_access", "borrow_mut"):
+                return self.posicion_expresion(expr[1])
+        return None
+    
+    # Regla Semántica 1- Compatibilidad de Tipos
+    def regla_tipo_declaracion(self, nombre, tipo, valor, pos):
+        esperado = self.normalizar_tipo(tipo)
+        recibido = self.tipo_expresion(valor)
+        if esperado is not None and recibido is not None and not self.tipos_compatibles(esperado, recibido):
+            self.error(
+                f"Tipo incompatible al declarar '{nombre}': se esperaba "
+                f"'{self.nombre_tipo(esperado)}', pero se obtuvo "
+                f"'{self.nombre_tipo(recibido)}'.",
+                self.posicion_expresion(valor) if self.posicion_expresion(valor) is not None else pos,
+            )
+
+    def regla_tipo_asignacion(self, nodo):
+        _, destino, operador, valor = nodo
+        esperado = self.tipo_expresion(destino)
+        recibido = self.tipo_expresion(valor)
+        if esperado is None or recibido is None:
+            return
+        pos = self.posicion_expresion(destino)
+        if operador == "=":
+            valido = self.tipos_compatibles(esperado, recibido)
+        elif operador in ("+=", "-=", "*=", "/=", "%="):
+            # El resultado de la operación compuesta debe conservar el tipo.
+            valido = self.unificar_numericos(esperado, recibido) == esperado
+        elif operador in ("&=", "|=", "^="):
+            valido = (esperado == recibido == "bool" or
+                      (esperado in self.ENTEROS and self.tipos_compatibles(esperado, recibido)))
+        elif operador in ("<<=", ">>="):
+            valido = (esperado in self.ENTEROS and
+                      (recibido in self.ENTEROS or recibido == "entero_literal"))
+        else:
+            return
+        if not valido:
+            self.error(
+                f"Asignación '{operador}' incompatible: el destino es "
+                f"'{self.nombre_tipo(esperado)}' y el valor es "
+                f"'{self.nombre_tipo(recibido)}'.", pos)
+
+    def regla_tipos_operacion(self, expr):
+        _, op, izquierda, derecha = expr
+        t_izq, t_der = self.tipo_expresion(izquierda), self.tipo_expresion(derecha)
+        if op in ("&&", "||"):
+            # La comprobación independiente permite detectar cada operando
+            # incorrecto sin generar errores en cascada en los nodos padres.
+            for lado, tipo, subexpr in (("izquierdo", t_izq, izquierda),
+                                        ("derecho", t_der, derecha)):
+                if tipo is not None and tipo != "bool":
+                    self.error(
+                        f"El operador lógico '{op}' requiere operandos 'bool': "
+                        f"el operando {lado} es '{self.nombre_tipo(tipo)}'.",
+                        self.posicion_expresion(subexpr))
+        elif t_izq is not None and t_der is not None:
+            if op in self.ARITMETICOS:
+                valido = self.unificar_numericos(t_izq, t_der) is not None
+            elif op in self.COMPARACIONES:
+                valido = self.tipos_comparables(t_izq, t_der, op)
+            else:
+                return
+            if not valido:
+                self.error(
+                    f"Operación '{op}' con tipos incompatibles: "
+                    f"'{self.nombre_tipo(t_izq)}' y '{self.nombre_tipo(t_der)}'.",
+                    self.posicion_expresion(expr))
+
+    # Regla Semántica2- Condiciones y operadores lógicos bool
+    def regla_condicion_booleana(self, expr, estructura):
+        tipo = self.tipo_expresion(expr)
+        if tipo is not None and tipo != "bool":
+            self.error(f"La condición de '{estructura}' debe ser 'bool', "f"no '{self.nombre_tipo(tipo)}'.", self.posicion_expresion(expr))
+
+    def regla_negacion_booleana(self, expr):
+        tipo = self.tipo_expresion(expr[1])
+        if tipo is not None and tipo != "bool":
+            self.error(f"El operador lógico '!' requiere un operando 'bool', "f"no '{self.nombre_tipo(tipo)}'.", self.posicion_expresion(expr[1]))
+
+    # Regla Semántica 3 (Como extra)- Acceso válido a elementos de una tupla   
+    def regla_acceso_tupla(self, expr):
+        _, tupla, indice = expr
+        tipo = self.tipo_expresion(tupla)
+        if not (isinstance(tipo, tuple) and tipo[0] == "tuple"):
+            return
+        if not isinstance(indice, int):
+            return
+        cantidad = len(tipo[1])
+        if indice < 0 or indice >= cantidad:
+            self.error(f"Índice {indice} fuera de rango, la tupla tiene {cantidad} "f"elementos (índices válidos: 0 a {cantidad - 1}).",self.posicion_expresion(tupla),)
     # ============================================================
     # FIN APORTE: @jonaguilera13 (Carlos Aguilera)
     # ============================================================
