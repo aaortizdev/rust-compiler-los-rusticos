@@ -1,14 +1,3 @@
-# ------------------------------------------------------------
-# interfaz.py
-#
-# Interfaz gráfica del analizador Léxico, Sintáctico y Semántico
-# para el subconjunto de Rust del grupo "Los Rústicos".
-#
-# Uso:  python interfaz.py   (o doble clic en iniciar_interfaz.bat)
-#
-# No modifica rust_lexer.py, rust_parser.py ni rust_semantic.py:
-# los usa a través de nucleo_analisis.py.
-# ------------------------------------------------------------
 import os
 import re
 import sys
@@ -20,7 +9,6 @@ if BASE not in sys.path:
     sys.path.insert(0, BASE)
 os.chdir(BASE)
 
-# Sin consola (pythonw) stdout/stderr son None; PLY escribe advertencias allí.
 if sys.stderr is None:
     sys.stderr = open(os.devnull, "w", encoding="utf-8")
 if sys.stdout is None:
@@ -1598,6 +1586,11 @@ def main():
     app = AplicacionAnalizador()
     if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
         app.abrir_archivo(sys.argv[1])
+    # Al abrir desde el .bat la ventana puede quedar detrás de otras: traerla al frente.
+    app.lift()
+    app.attributes("-topmost", True)
+    app.after(400, lambda: app.attributes("-topmost", False))
+    app.focus_force()
     app.mainloop()
 
 
