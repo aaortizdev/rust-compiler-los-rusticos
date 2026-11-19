@@ -170,7 +170,7 @@ class Pildora(tk.Canvas):
         extra = diametro + int(7 * self.escala) if self.punto else 0
         w = ancho_texto + 2 * self.padx + extra
         h = alto_texto + 2 * self.pady
-        if int(self.cget("width")) != w or int(self.cget("height")) != h:
+        if self.winfo_pixels(self.cget("width")) != w or self.winfo_pixels(self.cget("height")) != h:
             self.configure(width=w, height=h)
         relleno, color_texto, borde = self._colores()
         radio = h / 2 if self.radio is None else self.radio
