@@ -52,7 +52,7 @@ def analizar_archivo_y_generar_log(ruta_archivo_rs, usuario_git):
     
     print(f"\n[OK] Log generado exitosamente en: {nombre_log}")
 
-def run_parser(path, git_user="ChrisPal2307"):
+def run_parser(path, git_user):
     with open(path, encoding="utf-8") as f:
         data = f.read()
 
@@ -96,7 +96,7 @@ def run_parser(path, git_user="ChrisPal2307"):
 
 CARPETA_LOGS_SEMANTICO = os.path.join("logs", "semantico")
 
-def run_semantic(path, git_user="aaortizdev"):
+def run_semantic(path, git_user):
     with open(path, encoding="utf-8") as f:
         data = f.read()
 
